@@ -1,0 +1,40 @@
+x-build-args: &build_args
+  INSTALL_PYTHON_VERSION: "3.10"
+
+x-default-volumes: &default_volumes
+  volumes:
+    - ./:/app
+    - ./dev.db:/tmp/dev.db
+
+services:
+  flask-prod:
+    build:
+      context: .
+      target: production
+      args:
+        <<: *build_args
+    image: "research_assistant-production"
+    ports:
+      - "8080:5000"
+    environment:
+      FLASK_ENV: production
+      FLASK_DEBUG: 0
+      LOG_LEVEL: info
+      GUNICORN_WORKERS: 4
+    <<: *default_volumes
+
+  flask-manage:
+    profiles: ["manage"] 
+    build:
+      context: .
+      target: production
+      args:
+        <<: *build_args
+    entrypoint: flask
+    image: "research_assistant-manage"
+    environment:
+      FLASK_ENV: development
+      FLASK_DEBUG: 1
+    stdin_open: true
+    tty: true
+    <<: *default_volumes
