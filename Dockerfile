@@ -23,7 +23,9 @@ USER sid
 ENV PATH="/home/sid/.local/bin:${PATH}"
 
 COPY requirements requirements
-RUN pip install --no-cache --user -r requirements/prod.txt
+RUN pip install --no-cache \
+      -r requirements/prod.txt \
+      -r requirements/dev.txt
 
 COPY supervisord.conf /etc/supervisor/supervisord.conf
 COPY supervisord_programs /etc/supervisor/conf.d
