@@ -4,7 +4,6 @@ x-build-args: &build_args
 x-default-volumes: &default_volumes
   volumes:
     - ./:/app
-    - ./dev.db:/tmp/dev.db
 
 services:
   flask-prod:
