@@ -10,7 +10,6 @@ services:
   flask-prod:
     build:
       context: .
-      target: production
       args:
         <<: *build_args
     image: "research_assistant-production"
@@ -21,13 +20,13 @@ services:
       FLASK_DEBUG: 0
       LOG_LEVEL: info
       GUNICORN_WORKERS: 4
+      PORT: 5000  # gunicorn 使用这个变量
     <<: *default_volumes
 
   flask-manage:
-    profiles: ["manage"] 
+    profiles: ["manage"]
     build:
       context: .
-      target: production
       args:
         <<: *build_args
     entrypoint: flask
@@ -35,6 +34,7 @@ services:
     environment:
       FLASK_ENV: development
       FLASK_DEBUG: 1
+      PORT: 5000
     stdin_open: true
     tty: true
     <<: *default_volumes
