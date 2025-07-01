@@ -5,6 +5,7 @@ import sys
 
 from flask import Flask
 from flask import jsonify
+from flask_cors import CORS
 
 from research_assistant import commands, public, user
 from research_assistant.extensions import (
@@ -28,6 +29,8 @@ def create_app(config_object="research_assistant.settings"):
     """
     app = Flask(__name__.split(".")[0])
     app.config.from_object(config_object)
+    CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
+
     register_extensions(app)
     csrf_protect.exempt(blueprint)
     mail.init_app(app)
