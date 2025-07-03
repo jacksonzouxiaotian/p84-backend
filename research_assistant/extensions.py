@@ -9,6 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_static_digest import FlaskStaticDigest
 from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail
+from flask_jwt_extended import JWTManager
 
 bcrypt = Bcrypt()
 csrf_protect = CSRFProtect()
@@ -29,3 +30,4 @@ def load_user(user_id):
 # 设置未登录时访问受限资源的返回行为（API 项目推荐返回 JSON 而非重定向）
 login_manager.unauthorized_handler(lambda: ("Unauthorized", 401))
 mail = Mail()
+jwt = JWTManager()

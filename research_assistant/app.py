@@ -18,6 +18,7 @@ from research_assistant.extensions import (
     login_manager,
     migrate,
     mail,
+    jwt,
 )
 from research_assistant.public.views import blueprint
 
@@ -55,6 +56,7 @@ def register_extensions(app):
     debug_toolbar.init_app(app)
     migrate.init_app(app, db)
     flask_static_digest.init_app(app)
+    jwt.init_app(app)
     return None
 
 
