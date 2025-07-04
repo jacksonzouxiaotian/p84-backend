@@ -11,3 +11,7 @@ COPY . .
 EXPOSE 5000
 
 CMD gunicorn -b 0.0.0.0:$PORT autoapp:app
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+CMD ["/entrypoint.sh"]

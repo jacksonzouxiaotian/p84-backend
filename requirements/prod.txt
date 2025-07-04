@@ -41,3 +41,5 @@ environs==14.2.0
 Flask-Mail>=0.9.1
 
 Flask-CORS==4.0.0
+
+Flask-JWT-Extended==4.6.0
