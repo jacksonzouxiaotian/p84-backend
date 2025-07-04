@@ -27,7 +27,7 @@ def register():
         return jsonify({"msg": "User already exists"}), 400
 
     user = User(username=username, email=email)
-    user.set_password(password)  # 使用加密方法设置密码
+    user.password = password  # 使用加密方法设置密码
     db.session.add(user)
     db.session.commit()
 
