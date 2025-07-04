@@ -21,7 +21,7 @@ from research_assistant.extensions import (
     jwt,
 )
 from research_assistant.public.views import blueprint
-
+from research_assistant.dashboard.views import dashboard as dashboard_blueprint
 
 def create_app(config_object="research_assistant.settings"):
     """Create application factory, as explained here: http://flask.pocoo.org/docs/patterns/appfactories/.
@@ -43,6 +43,8 @@ def create_app(config_object="research_assistant.settings"):
     register_shellcontext(app)
     register_commands(app)
     configure_logger(app)
+    app.config['DEBUG'] = True
+    app.config['PROPAGATE_EXCEPTIONS'] = True
     return app
 
 
@@ -64,6 +66,7 @@ def register_blueprints(app):
     """Register Flask blueprints."""
     app.register_blueprint(public.views.blueprint)
     app.register_blueprint(user.views.blueprint)
+    app.register_blueprint(dashboard_blueprint)
     return None
 
 
