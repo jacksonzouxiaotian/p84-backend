@@ -24,8 +24,14 @@ def register():
     if not username or not email or not password:
         return jsonify({"msg": "Missing fields"}), 400
 
-    if User.query.filter((User.username == username) | (User.email == email)).first():
-        return jsonify({"msg": "User already exists"}), 400
+    # Check if username already exists
+    if User.query.filter_by(username=username).first():
+        return jsonify({"msg": "Username already exists"}), 400
+
+    # Check if email already exists
+    if User.query.filter_by(email=email).first():
+        return jsonify({"msg": "Email already exists"}), 400
+
 
     user = User(username=username, email=email)
     user.password = password  # 使用加密方法设置密码
