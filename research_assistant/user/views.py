@@ -6,6 +6,7 @@ from flask_jwt_extended import (
 )
 from research_assistant.extensions import db
 from research_assistant.user.models import User
+from research_assistant.dashboard.models import PhaseStatus
 
 blueprint = Blueprint("user", __name__, url_prefix="/users", static_folder="../static")
 
@@ -29,8 +30,26 @@ def register():
     user = User(username=username, email=email)
     user.password = password  # 使用加密方法设置密码
     db.session.add(user)
-    db.session.commit()
+    db.session.flush()  # Flush to get user.id before committing
 
+    # Initialize 5 default research phases
+    titles = [
+    "Define Topic & Question",
+    "Literature Review",
+    "Identify Gaps",
+    "Plan Methodology",
+    "Write & Revise"
+    ]
+    for i, title in enumerate(titles, start=1):
+        phase = PhaseStatus(
+            user_id=user.id,
+            phase_number=i,
+            title=title,
+            status="NotCompleted"
+        )
+        db.session.add(phase)
+    db.session.commit()
+    
     return jsonify({"msg": "Registration successful"}), 200
 
 
