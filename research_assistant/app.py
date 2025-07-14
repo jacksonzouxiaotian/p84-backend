@@ -22,6 +22,8 @@ from research_assistant.extensions import (
 )
 from research_assistant.public.views import blueprint
 from research_assistant.dashboard.views import dashboard as dashboard_blueprint
+from research_assistant.tag.views import blueprint as tag_bp
+from research_assistant.ai_assistant.views import blueprint as ai_bp
 
 def create_app(config_object="research_assistant.settings"):
     """Create application factory, as explained here: http://flask.pocoo.org/docs/patterns/appfactories/.
@@ -67,6 +69,8 @@ def register_blueprints(app):
     app.register_blueprint(public.views.blueprint)
     app.register_blueprint(user.views.blueprint)
     app.register_blueprint(dashboard_blueprint)
+    app.register_blueprint(tag_bp)
+    app.register_blueprint(ai_bp)
     return None
 
 
