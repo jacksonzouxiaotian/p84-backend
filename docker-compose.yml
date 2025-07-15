@@ -1,10 +1,6 @@
 x-build-args: &build_args
   INSTALL_PYTHON_VERSION: "3.10"
 
-x-default-volumes: &default_volumes
-  volumes:
-    - ./:/app
-
 services:
   db:
     image: postgres:14
@@ -44,10 +40,9 @@ services:
       MAIL_USE_TLS: ${MAIL_USE_TLS}
     command: >
       bash -c "while ! nc -z db 5432; do echo 'Waiting for DB...'; sleep 1; done &&
-      gunicorn -w ${GUNICORN_WORKERS} -b 0.0.0.0:${PORT} autoapp:app"
+      gunicorn --preload -w ${GUNICORN_WORKERS} -b 0.0.0.0:${PORT} autoapp:app"
     depends_on:
       - db
-    <<: *default_volumes
     networks:
       - shared-net
 
@@ -70,7 +65,6 @@ services:
     tty: true
     depends_on:
       - db
-    <<: *default_volumes
     networks:
       - shared-net
 

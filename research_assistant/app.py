@@ -6,7 +6,7 @@ import sys
 from flask import Flask
 from flask import jsonify
 from flask_cors import CORS
-
+from sqlalchemy import inspect
 from research_assistant import commands, public, user
 from research_assistant.extensions import (
     bcrypt,
@@ -19,26 +19,37 @@ from research_assistant.extensions import (
     migrate,
     mail,
     jwt,
+    init_s3_client
 )
 from research_assistant.public.views import blueprint
 from research_assistant.dashboard.views import dashboard as dashboard_blueprint
 from research_assistant.tag.views import blueprint as tag_bp
 from research_assistant.ai_assistant.views import blueprint as ai_bp
+from research_assistant.public.views import blueprint
+from research_assistant.dashboard.views import dashboard as dashboard_blueprint
+from research_assistant.writing_tool.routes import writing_tool_bp 
 
 def create_app(config_object="research_assistant.settings"):
     """Create application factory, as explained here: http://flask.pocoo.org/docs/patterns/appfactories/.
 
     :param config_object: The configuration object to use.
     """
+    
     app = Flask(__name__.split(".")[0])
     app.config.from_object(config_object)
     CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
     register_extensions(app)
+    app.register_blueprint(writing_tool_bp, url_prefix="/writing_tool")
+    csrf_protect.exempt(writing_tool_bp)
     csrf_protect.exempt(blueprint)
     mail.init_app(app)
-    if not app.config.get("TESTING", False):
-        with app.app_context():
+    init_s3_client(app)
+    with app.app_context():
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names(schema='public')
+        print("Tables in public schema:", tables)
+        if "users" not in tables:
             db.create_all()
     register_blueprints(app)
     register_errorhandlers(app)
@@ -69,8 +80,16 @@ def register_blueprints(app):
     app.register_blueprint(public.views.blueprint)
     app.register_blueprint(user.views.blueprint)
     app.register_blueprint(dashboard_blueprint)
+<<<<<<< HEAD
     app.register_blueprint(tag_bp)
     app.register_blueprint(ai_bp)
+=======
+<<<<<<< HEAD
+    app.register_blueprint(tag_bp)
+    app.register_blueprint(ai_bp)
+=======
+>>>>>>> 7e465aa (writing tool)
+>>>>>>> e0fcfe4 (writing tool)
     return None
 
 

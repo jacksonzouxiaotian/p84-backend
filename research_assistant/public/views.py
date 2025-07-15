@@ -14,6 +14,8 @@ from research_assistant.extensions import login_manager, mail, bcrypt, db, csrf_
 from research_assistant.public.forms import LoginForm
 from research_assistant.user.forms import RegisterForm
 from research_assistant.user.models import User, EmailCaptcha
+from flask_jwt_extended import create_access_token
+from research_assistant.dashboard.models import PhaseStatus
 
 blueprint = Blueprint("public", __name__, static_folder="../static")
 
@@ -48,12 +50,15 @@ def login():
     form = LoginForm(data=json_data)
     if form.validate():
         login_user(form.user)
+        access_token = create_access_token(identity=str(form.user.id))
+
         return jsonify({
             "code": 0,
             "msg": "Login successful",
             "data": {
                 "user_id": form.user.id,
-                "username": form.user.username
+                "username": form.user.username,
+                "access_token": access_token
             }
         })
     else:
@@ -89,12 +94,26 @@ def register():
 
     form = RegisterForm(data=json_data)
     if form.validate():
-        User.create(
+        user = User.create(
             username=form.username.data,
             email=form.email.data,
             password=form.password.data,
             active=True,
         )
+        db.session.add(user)
+        db.session.flush()  # 获取 user.id，用于后续 PhaseStatus 外键
+
+        titles = ["选题", "文献阅读", "研究设计", "撰写报告", "提交成果"]
+        for i, title in enumerate(titles, start=1):
+            phase = PhaseStatus(
+                user_id=user.id,
+                phase_number=i,
+                title=title,
+                status="NotCompleted"
+            )
+            db.session.add(phase)
+
+        db.session.commit()
         return jsonify({
             "code": 0,
             "msg": "Registration successful, you can now log in."

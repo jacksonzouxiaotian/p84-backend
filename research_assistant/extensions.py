@@ -10,7 +10,8 @@ from flask_static_digest import FlaskStaticDigest
 from flask_wtf.csrf import CSRFProtect
 from flask_mail import Mail
 from flask_jwt_extended import JWTManager
-
+from flask import current_app
+import boto3
 bcrypt = Bcrypt()
 csrf_protect = CSRFProtect()
 login_manager = LoginManager()
@@ -31,3 +32,14 @@ def load_user(user_id):
 login_manager.unauthorized_handler(lambda: ("Unauthorized", 401))
 mail = Mail()
 jwt = JWTManager()
+
+def init_s3_client(app):
+    app.s3_client = boto3.client(
+        "s3",
+        aws_access_key_id=app.config["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=app.config["AWS_SECRET_ACCESS_KEY"],
+        region_name=app.config.get("AWS_S3_REGION"),
+    )
+
+def get_s3_client():
+    return current_app.s3_client
