@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.13-slim-bullseye
 
 # 安装 netcat，用于等待数据库启动
 RUN apt-get update && apt-get install -y netcat && apt-get clean
