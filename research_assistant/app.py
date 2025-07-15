@@ -80,17 +80,10 @@ def register_blueprints(app):
     app.register_blueprint(public.views.blueprint)
     app.register_blueprint(user.views.blueprint)
     app.register_blueprint(dashboard_blueprint)
-<<<<<<< HEAD
     app.register_blueprint(tag_bp)
     app.register_blueprint(ai_bp)
-=======
-<<<<<<< HEAD
-    app.register_blueprint(tag_bp)
-    app.register_blueprint(ai_bp)
-=======
->>>>>>> 7e465aa (writing tool)
->>>>>>> e0fcfe4 (writing tool)
     return None
+
 
 
 def register_errorhandlers(app):
