@@ -4,7 +4,7 @@ from research_assistant.user.models import User
 from research_assistant.extensions import db
 
 class Document(PkModel):
-    __tablename__ = 'documents'
+    __tablename__ = 'cloud_documents'
 
     title = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
