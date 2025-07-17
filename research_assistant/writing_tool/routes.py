@@ -3,7 +3,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from research_assistant.extensions import db,get_s3_client
-from research_assistant.writing_tool.models import Document, DocumentVersion
+from research_assistant.writing_tool.models import CloudDocument as Document, DocumentVersion
 from research_assistant.user.models import User
 from research_assistant.utils import upload_file_to_s3
 

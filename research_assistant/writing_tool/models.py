@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from research_assistant.user.models import User
 from research_assistant.extensions import db
 
-class Document(PkModel):
+class CloudDocument(PkModel):
     __tablename__ = 'cloud_documents'
 
     title = db.Column(db.String, nullable=False)
