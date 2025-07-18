@@ -2,12 +2,15 @@
 """The app module, containing the app factory function."""
 import logging
 import sys
-
 from flask import Flask
 from flask import jsonify
 from flask_cors import CORS
+
 from sqlalchemy import inspect
+from research_assistant.brain.views import brainstorm_bp
+from research_assistant.outline.views import outline_bp
 from research_assistant import commands, public, user
+from research_assistant.planning.views import planning_bp
 from research_assistant.extensions import (
     bcrypt,
     cache,
@@ -82,6 +85,9 @@ def register_blueprints(app):
     app.register_blueprint(dashboard_blueprint)
     app.register_blueprint(tag_bp)
     app.register_blueprint(ai_bp)
+    app.register_blueprint(brainstorm_bp)
+    app.register_blueprint(outline_bp)
+    app.register_blueprint(planning_bp)
     return None
 
 

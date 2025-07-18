@@ -44,3 +44,4 @@ AWS_S3_BUCKET_NAME = env.str("AWS_S3_BUCKET_NAME")
 AWS_S3_REGION = env.str("AWS_S3_REGION")
 AWS_S3_ENDPOINT_URL = f"https://{AWS_S3_BUCKET_NAME}.s3.{AWS_S3_REGION}.amazonaws.com"
 
+
