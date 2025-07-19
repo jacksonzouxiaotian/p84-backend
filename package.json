@@ -5,9 +5,9 @@
     "start": "node index.js"
   },
   "dependencies": {
-    // 你的前端或 Node 依赖
+
   },
   "devDependencies": {
-    // 你的开发依赖
+
   }
 }
