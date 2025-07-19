@@ -33,7 +33,12 @@ jobs:
               echo "No .env or .env.example found, skipping."
             fi
       - name: Run Node lints
-        run: npm run lint
+        run: |
+            if [ -f package.json ] && grep -q "\"lint\"" package.json; then
+              npm run lint
+            else
+              echo "No lint script or no JS files; skipping frontend lint"
+            fi
       - name: Run Python lints
         run: flask lint --check
       - name: Run Python tests
