@@ -6,7 +6,7 @@ from research_assistant.extensions import db
 from research_assistant.outline.models import Section
 from research_assistant.planning.models import Phase, Task
 
-planning_bp = Blueprint('planning', __name__, url_prefix='/api/planning')
+planning_bp = Blueprint('planning', __name__, url_prefix='/planning')
 
 @planning_bp.route('/', methods=['GET'])
 def fetch_planning():

@@ -9,7 +9,7 @@ from research_assistant.planning.models import Phase, Task
 # —————————————————————————————————————————————————————————
 # 1. 一定要用 /api/brainstorm 作为前缀，这样前端对 /api/brainstorm/save 等调用才能命中
 # —————————————————————————————————————————————————————————
-brainstorm_bp = Blueprint('brainstorm', __name__, url_prefix='/api')
+brainstorm_bp = Blueprint('brainstorm', __name__)
 
 @brainstorm_bp.route('/', methods=['GET'])
 def list_brain_entries():
