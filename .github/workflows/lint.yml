@@ -22,7 +22,16 @@ jobs:
           pip install -r requirements/dev.txt
       - name: Install Node dependencies
         run: npm install
-      - run: cp .env.example .env
+      - name: Prepare .env file
+        run: |
+            if [ -f .env ]; then
+              echo ".env already present, skipping."
+            elif [ -f .env.example ]; then
+              cp .env.example .env
+              echo "Copied .env.example → .env"
+            else
+              echo "No .env or .env.example found, skipping."
+            fi
       - name: Run Node lints
         run: npm run lint
       - name: Run Python lints
