@@ -41,6 +41,8 @@ jobs:
               echo "ℹ️  No lint script defined (or no JS files), skipping frontend lint"
             fi
       - name: Run Python lints
-        run: flask lint --check
+        run: |
+          export DATABASE_URL="sqlite:///:memory:"
+          flask lint --check
       - name: Run Python tests
         run: flask test
