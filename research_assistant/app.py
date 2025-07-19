@@ -54,7 +54,6 @@ def create_app(config_object="research_assistant.settings"):
     # 注册 Public Blueprint，并豁免 CSRF
     app.register_blueprint(public.views.blueprint)
     csrf_protect.exempt(public.views.blueprint)
-
     # 初始化邮件和 S3 客户端
     mail.init_app(app)
     init_s3_client(app)
@@ -63,7 +62,8 @@ def create_app(config_object="research_assistant.settings"):
     with app.app_context():
         try:
             inspector = inspect(db.engine)
-            tables = inspector.get_table_names(schema="public")
+            tables = inspector.get_table_names()  # 不加 schema 参数
+            #tables = inspector.get_table_names(schema="public")
             app.logger.info("Tables in public schema: %s", tables)
             if "users" not in tables:
                 db.create_all()
