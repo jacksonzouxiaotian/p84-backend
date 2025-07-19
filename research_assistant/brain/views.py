@@ -1,5 +1,3 @@
-# research_assistant/brain/views.py
-
 from flask import Blueprint, request, jsonify
 from research_assistant.extensions import db
 from research_assistant.brain.models import BrainEntry
@@ -23,16 +21,6 @@ def create_brain_entry():
         who   = data.get('who'),
     )
     db.session.add(entry)
-
-    # 如果 5W 都填写了，则自动标记 “Define Topic & Question” 阶段完成（Mock）
-    if all([entry.why, entry.what, entry.where, entry.when, entry.who]):
-        phase = Phase.query.filter_by(title='Define Topic & Question').first()
-        if phase:
-            # 避免重复插入
-            exists = any(t.description == 'Brainstorm Complete' for t in phase.tasks)
-            if not exists:
-                phase.tasks.append(Task(description='Brainstorm Complete', completed=True))
-
     db.session.commit()
     return jsonify(entry.to_dict()), 201
 
@@ -53,21 +41,30 @@ def delete_brain_entry(entry_id):
     db.session.commit()
     return '', 204
 
-@brainstorm_bp.route('/complete', methods=['POST'])
-def complete_brainstorm():
-    """手动标记 Brainstorm（Define Topic）阶段完成"""
-    phase = Phase.query.filter_by(title='Define Topic & Question').first()
-    if phase:
-        exists = any(t.description == 'Brainstorm Complete' for t in phase.tasks)
-        if not exists:
-            phase.tasks.append(Task(description='Brainstorm Complete', completed=True))
-            db.session.commit()
-    return '', 204
-
-@brainstorm_bp.route('/chat', methods=['POST'])
-def brainstorm_chat():
-    """Mock AI 聊天接口"""
+@brainstorm_bp.route('/save', methods=['POST'])
+def save_brainstorm_session():
+    """
+    前端 saveBrainstormSession() 调用此接口：
+      POST /api/brainstorm/save
+      payload { messages, fiveW, timestamp }
+    我们这里只把 fiveW 写入一条 BrainEntry，messages/timestamp 可根据需求另行存储。
+    """
     data = request.get_json() or {}
-    return jsonify({
-        'reply': f"[模拟回答] 收到 Brainstorm 阶段的问题：{data.get('content')}"
-    }), 200
+    fiveW = data.get('fiveW', {})
+    entry = BrainEntry(
+        why   = fiveW.get('why'),
+        what  = fiveW.get('what'),
+        where = fiveW.get('where'),
+        when  = fiveW.get('when'),
+        who   = fiveW.get('who'),
+    )
+    db.session.add(entry)
+
+    # If all 5W provided, mock 自动标记 “Define Topic & Question” 阶段完成
+    if all([entry.why, entry.what, entry.where, entry.when, entry.who]):
+        phase = Phase.query.filter_by(title='Define Topic & Question').first()
+        if phase and not any(t.description == 'Brainstorm Complete' for t in phase.tasks):
+            phase.tasks.append(Task(description='Brainstorm Complete', completed=True))
+
+    db.session.commit()
+    return jsonify({'id': entry.id}), 201

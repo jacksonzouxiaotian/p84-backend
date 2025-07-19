@@ -8,6 +8,7 @@ from flask_cors import CORS
 
 from sqlalchemy import inspect
 from research_assistant.brain.views import brainstorm_bp
+from research_assistant.chat.views  import chat_bp
 from research_assistant.outline.views import outline_bp
 from research_assistant import commands, public, user
 from research_assistant.planning.views import planning_bp
@@ -86,6 +87,7 @@ def register_blueprints(app):
     app.register_blueprint(tag_bp)
     app.register_blueprint(ai_bp)
     app.register_blueprint(brainstorm_bp)
+    app.register_blueprint(chat_bp)
     app.register_blueprint(outline_bp)
     app.register_blueprint(planning_bp)
     return None

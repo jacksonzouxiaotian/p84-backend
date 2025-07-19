@@ -1,5 +1,3 @@
-# research_assistant/brain/models.py
-
 from datetime import datetime
 from research_assistant.extensions import db
 
@@ -16,12 +14,12 @@ class BrainEntry(db.Model):
 
     def to_dict(self):
         return {
-            'id': self.id,
-            'why': self.why,
-            'what': self.what,
-            'where': self.where,
-            'when': self.when,
-            'who': self.who,
+            'id':         self.id,
+            'why':        self.why,
+            'what':       self.what,
+            'where':      self.where,
+            'when':       self.when,
+            'who':        self.who,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
         }
