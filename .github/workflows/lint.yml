@@ -1,63 +1,31 @@
 name: Build Status
 
 on:
-  push:
+  - push
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. 签出仓库
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # 2. 设置 Python
+      - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-
-      # 3. 安装 Python 依赖
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+          registry-url: "https://registry.npmjs.org"
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements/dev.txt
-
-      # 4. 确保有 .env
-      - name: Use existing .env
-        run: |
-          if [ -f .env ]; then
-            echo "✅ Using existing .env"
-          else
-            echo "❌ Error: .env not found" >&2
-            exit 1
-          fi
-
-      # 5. 设置 Node（用于前端 lint）
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18.x"
-          registry-url: "https://registry.npmjs.org"
-
-      # 6. 条件执行：如果有 package.json，就跑 lint，否则跳过
+      - name: Install Node dependencies
+        run: npm install
+      - run: cp .env.example .env
       - name: Run Node lints
-        run: |
-          if [ -f package.json ]; then
-            echo "📦 package.json found, running npm install + lint…"
-            npm install
-            npm run lint
-          else
-            echo "⚠️  package.json not found, skipping Node lint step."
-          fi
-
-      # 7. Python 代码风格检查
+        run: npm run lint
       - name: Run Python lints
-        run: |
-          flask lint --check
-
-      # 8. 执行单元测试
+        run: flask lint --check
       - name: Run Python tests
-        run: |
-          flask test
+        run: flask test
