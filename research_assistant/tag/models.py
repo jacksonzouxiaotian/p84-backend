@@ -1,5 +1,6 @@
 from research_assistant.database import Column, PkModel, db, reference_col, relationship
 
+
 class Tag(PkModel):
     __tablename__ = "tags"
 

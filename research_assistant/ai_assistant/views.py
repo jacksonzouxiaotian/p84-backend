@@ -1,6 +1,7 @@
 import os
+
 import openai
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
 
 blueprint = Blueprint("ai", __name__, url_prefix="/ai")
 

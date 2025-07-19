@@ -54,5 +54,7 @@ env/
 # Development database
 *.db
 
+
 # Secret environment variables
 .env
+

@@ -1,7 +1,9 @@
-from research_assistant.database import PkModel
 from datetime import datetime, timezone
-from research_assistant.user.models import User
+
+from research_assistant.database import PkModel
 from research_assistant.extensions import db
+from research_assistant.user.models import User
+
 
 class CloudDocument(PkModel):
     __tablename__ = 'cloud_documents'

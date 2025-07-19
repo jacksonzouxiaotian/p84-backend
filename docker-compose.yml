@@ -1,3 +1,5 @@
+version: '3.9'
+
 x-build-args: &build_args
   INSTALL_PYTHON_VERSION: "3.10"
 
@@ -17,11 +19,13 @@ services:
       - shared-net
 
   flask-prod:
+    env_file:
+      - .env
     build:
       context: .
       args:
         <<: *build_args
-    image: "research_assistant-production"
+    image: research_assistant-production
     ports:
       - "8080:5000"
     environment:
@@ -32,6 +36,7 @@ services:
       GUNICORN_WORKERS: ${GUNICORN_WORKERS}
       PORT: ${PORT}
       DATABASE_URL: ${DATABASE_URL}
+      SQLALCHEMY_DATABASE_URI: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
       MAIL_SERVER: ${MAIL_SERVER}
       MAIL_PORT: ${MAIL_PORT}
@@ -53,7 +58,7 @@ services:
       args:
         <<: *build_args
     entrypoint: flask
-    image: "research_assistant-manage"
+    image: research_assistant-manage
     environment:
       FLASK_ENV: ${FLASK_ENV}
       FLASK_DEBUG: ${FLASK_DEBUG}
