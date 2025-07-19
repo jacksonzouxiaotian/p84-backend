@@ -17,6 +17,8 @@ services:
       - shared-net
 
   flask-prod:
+    env_file:
+      - .env
     build:
       context: .
       args:
@@ -32,6 +34,7 @@ services:
       GUNICORN_WORKERS: ${GUNICORN_WORKERS}
       PORT: ${PORT}
       DATABASE_URL: ${DATABASE_URL}
+      SQLALCHEMY_DATABASE_URI: ${DATABASE_URL}
       SECRET_KEY: ${SECRET_KEY}
       MAIL_SERVER: ${MAIL_SERVER}
       MAIL_PORT: ${MAIL_PORT}

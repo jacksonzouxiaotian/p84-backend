@@ -7,6 +7,7 @@ from flask import jsonify
 from flask_cors import CORS
 
 from sqlalchemy import inspect
+import os
 from research_assistant.brain.views import brainstorm_bp
 from research_assistant.chat.views  import chat_bp
 from research_assistant.outline.views import outline_bp
@@ -41,6 +42,8 @@ def create_app(config_object="research_assistant.settings"):
     
     app = Flask(__name__.split(".")[0])
     app.config.from_object(config_object)
+    if os.getenv("DATABASE_URL"):
+        app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
     CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
     register_extensions(app)
@@ -50,11 +53,15 @@ def create_app(config_object="research_assistant.settings"):
     mail.init_app(app)
     init_s3_client(app)
     with app.app_context():
-        inspector = inspect(db.engine)
-        tables = inspector.get_table_names(schema='public')
-        print("Tables in public schema:", tables)
-        if "users" not in tables:
-            db.create_all()
+        try:
+            inspector = inspect(db.engine)
+            tables = inspector.get_table_names(schema='public')
+            print("Tables in public schema:", tables)
+            if "users" not in tables:
+                db.create_all()
+        except Exception as e:
+            print("⚠️ Warning: could not inspect/create tables:", e)
+
     register_blueprints(app)
     register_errorhandlers(app)
     register_shellcontext(app)
