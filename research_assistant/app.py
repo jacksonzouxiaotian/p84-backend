@@ -17,6 +17,7 @@ from research_assistant.outline.views import outline_bp
 from research_assistant.planning.views import planning_bp
 from research_assistant.tag.views import blueprint as tag_bp
 from research_assistant.writing_tool.routes import writing_tool_bp
+from research_assistant.reference.models import Reference
 from research_assistant.extensions import (
     bcrypt,
     cache,
