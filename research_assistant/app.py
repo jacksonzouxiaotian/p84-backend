@@ -54,13 +54,12 @@ def create_app(config_object="research_assistant.settings"):
     with app.app_context():
         try:
             inspector = inspect(db.engine)
-            tables = inspector.get_table_names(schema="public")
-            app.logger.info(f"Found tables: {tables}")
+            tables = inspector.get_table_names(schema='public')
+            app.logger.info("Tables in public schema: %s", tables)
             if "users" not in tables:
                 db.create_all()
         except Exception as e:
-            # 无论是网络、权限还是表结构的问题，都不影响 CLI/Lint
-            app.logger.warning(f"Skipping table inspection: {e!r}")
+            app.logger.warning("Skipping table inspection on startup, will create_all later if needed", exc_info=e)
 
     register_blueprints(app)
     register_errorhandlers(app)

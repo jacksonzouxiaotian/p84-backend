@@ -13,7 +13,6 @@ from flask_jwt_extended import create_access_token
 from flask_login import login_required, login_user, logout_user
 from flask_mail import Message
 
-from research_assistant.dashboard.models import PhaseStatus
 from research_assistant.extensions import bcrypt, csrf_protect, db, login_manager, mail
 from research_assistant.public.forms import LoginForm
 from research_assistant.user.forms import RegisterForm
@@ -85,6 +84,7 @@ def logout():
     })
 @blueprint.route("/register/", methods=["POST"])
 def register():
+    from research_assistant.dashboard.models import PhaseStatus
     """
     API endpoint for new user registration.
     Accepts JSON body: { "username": "", "email": "", "password": "" }
