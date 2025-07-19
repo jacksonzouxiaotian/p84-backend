@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
 """Public section, including homepage and signup (API version)."""
+import random
+import string
+
 from flask import (
     Blueprint,
     current_app,
     jsonify,
     request,
 )
+from flask_jwt_extended import create_access_token
 from flask_login import login_required, login_user, logout_user
-import random
-import string
 from flask_mail import Message
-from research_assistant.extensions import login_manager, mail, bcrypt, db, csrf_protect
+
+from research_assistant.dashboard.models import PhaseStatus
+from research_assistant.extensions import bcrypt, csrf_protect, db, login_manager, mail
 from research_assistant.public.forms import LoginForm
 from research_assistant.user.forms import RegisterForm
-from research_assistant.user.models import User, EmailCaptcha
-from flask_jwt_extended import create_access_token
-from research_assistant.dashboard.models import PhaseStatus
+from research_assistant.user.models import EmailCaptcha, User
 
 blueprint = Blueprint("public", __name__, static_folder="../static")
 

@@ -1,10 +1,11 @@
 # tests/test_reset_password.py
 
 import json
+
 import pytest
 
-from research_assistant.user.models import User, EmailCaptcha
-from research_assistant.extensions import db, bcrypt
+from research_assistant.extensions import bcrypt, db
+from research_assistant.user.models import EmailCaptcha, User
 
 
 @pytest.fixture

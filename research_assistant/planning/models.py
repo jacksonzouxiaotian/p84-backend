@@ -1,5 +1,7 @@
 from datetime import date, datetime
+
 from research_assistant.extensions import db
+
 
 class Phase(db.Model):
     __tablename__ = 'phases'

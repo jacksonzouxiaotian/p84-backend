@@ -1,8 +1,9 @@
 # research_assistant/brain/views.py
 
-from flask import Blueprint, request, jsonify
-from research_assistant.extensions import db
+from flask import Blueprint, jsonify, request
+
 from research_assistant.brain.models import BrainEntry
+from research_assistant.extensions import db
 from research_assistant.planning.models import Phase, Task
 
 # —————————————————————————————————————————————————————————

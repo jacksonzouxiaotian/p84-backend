@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 """The app module, containing the app factory function."""
 import logging
-import sys
-from flask import Flask
-from flask import jsonify
-from flask_cors import CORS
-
-from sqlalchemy import inspect
 import os
-from research_assistant.brain.views import brainstorm_bp
-from research_assistant.chat.views  import chat_bp
-from research_assistant.outline.views import outline_bp
+import sys
+
+from flask import Flask, jsonify
+from flask_cors import CORS
+from sqlalchemy import inspect
+
 from research_assistant import commands, public, user
-from research_assistant.planning.views import planning_bp
+from research_assistant.ai_assistant.views import blueprint as ai_bp
+from research_assistant.brain.views import brainstorm_bp
+from research_assistant.chat.views import chat_bp
+from research_assistant.dashboard.views import dashboard as dashboard_blueprint
 from research_assistant.extensions import (
     bcrypt,
     cache,
@@ -20,19 +20,18 @@ from research_assistant.extensions import (
     db,
     debug_toolbar,
     flask_static_digest,
-    login_manager,
-    migrate,
-    mail,
+    init_s3_client,
     jwt,
-    init_s3_client
+    login_manager,
+    mail,
+    migrate,
 )
+from research_assistant.outline.views import outline_bp
+from research_assistant.planning.views import planning_bp
 from research_assistant.public.views import blueprint
-from research_assistant.dashboard.views import dashboard as dashboard_blueprint
 from research_assistant.tag.views import blueprint as tag_bp
-from research_assistant.ai_assistant.views import blueprint as ai_bp
-from research_assistant.public.views import blueprint
-from research_assistant.dashboard.views import dashboard as dashboard_blueprint
-from research_assistant.writing_tool.routes import writing_tool_bp 
+from research_assistant.writing_tool.routes import writing_tool_bp
+
 
 def create_app(config_object="research_assistant.settings"):
     """Create application factory, as explained here: http://flask.pocoo.org/docs/patterns/appfactories/.

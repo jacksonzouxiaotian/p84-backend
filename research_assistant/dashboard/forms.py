@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, StringField, SelectField
+from wtforms import IntegerField, SelectField, StringField
 from wtforms.validators import DataRequired, NumberRange
+
 
 class PhaseStatusForm(FlaskForm):
     user_id = IntegerField("User ID", validators=[

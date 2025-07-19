@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Helper utilities and decorators."""
-from flask import flash, current_app
+from flask import current_app, flash
+
 from research_assistant.extensions import get_s3_client
 
 

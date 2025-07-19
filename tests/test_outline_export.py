@@ -1,8 +1,10 @@
 # tests/test_outline_export.py
 import pytest
+
 from research_assistant.app import create_app
 from research_assistant.extensions import db
 from research_assistant.outline.models import Section
+
 
 @pytest.fixture
 def app():

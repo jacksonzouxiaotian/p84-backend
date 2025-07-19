@@ -1,5 +1,7 @@
 from datetime import datetime
+
 from research_assistant.extensions import db
+
 
 class Section(db.Model):
     __tablename__ = 'sections'

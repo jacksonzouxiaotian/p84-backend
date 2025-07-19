@@ -1,7 +1,9 @@
 # research_assistant/outline/views.py
 
 from datetime import datetime
-from flask import Blueprint, request, jsonify, Response
+
+from flask import Blueprint, Response, jsonify, request
+
 from research_assistant.extensions import db
 from research_assistant.outline.models import Section
 from research_assistant.planning.models import Phase, Task

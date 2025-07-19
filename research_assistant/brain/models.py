@@ -1,5 +1,7 @@
 from datetime import datetime
+
 from research_assistant.extensions import db
+
 
 class BrainEntry(db.Model):
     __tablename__ = 'brain_entries'

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
 
 chat_bp = Blueprint('chat', __name__, url_prefix='/api')
 

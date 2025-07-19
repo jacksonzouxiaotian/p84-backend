@@ -1,8 +1,10 @@
-from flask import Blueprint, request, jsonify
-from research_assistant.extensions import db
-from research_assistant.planning.models import Phase, Task
-from research_assistant.outline.models import Section
 from datetime import date
+
+from flask import Blueprint, jsonify, request
+
+from research_assistant.extensions import db
+from research_assistant.outline.models import Section
+from research_assistant.planning.models import Phase, Task
 
 planning_bp = Blueprint('planning', __name__, url_prefix='/api/planning')
 

@@ -3,6 +3,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 from webtest import TestApp
+
 from research_assistant.app import create_app
 from research_assistant.extensions import db as _db
 from research_assistant.user.models import User

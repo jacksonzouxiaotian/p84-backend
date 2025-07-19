@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from research_assistant.extensions import db
-from research_assistant.dashboard.models import PhaseStatus
 from research_assistant.dashboard.forms import PhaseStatusForm
+from research_assistant.dashboard.models import PhaseStatus
+from research_assistant.extensions import db
 
 dashboard = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 

@@ -1,6 +1,7 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
+
 from research_assistant.extensions import db
-from research_assistant.tag.models import Tag, Document, DocumentTag
+from research_assistant.tag.models import Document, DocumentTag, Tag
 
 blueprint = Blueprint("tag", __name__, url_prefix="/tags")
 
