@@ -12,14 +12,14 @@ class Tag(PkModel):
 class Document(PkModel):
     """
     示例文献模型，可与 BibTeX 导入结合使用。
-    你可以根据项目需要扩展字段（如 author, year, bibkey）
+    可以根据项目需要扩展字段
     """
     __tablename__ = "documents"
 
     title = Column(db.String(256), nullable=False)
     user_id = reference_col("users")  # 和现有 User 模型对接
     created_at = Column(db.DateTime, default=db.func.now())
-
+    completed = Column(db.Boolean, default=False)
     tags = relationship("Tag", secondary="document_tags", backref="documents")
 
     def __repr__(self):
