@@ -87,7 +87,7 @@ def brainstorm_chat():
     data = request.get_json() or {}
     user_input = data.get('message') or data.get('content') or ''
     # TODO: 在这里接入真实 LLM；当前先返回 Mock
-    reply = f"[模拟回答] 收到 Brainstorm 阶段的问题：{user_input}"
+    reply = f"[Simulated answer] Received questions from the Brainstorm stage：{user_input}"
     return jsonify({'reply': reply}), 200
 
 @brainstorm_bp.route('/progress', methods=['POST'])
