@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from research_assistant.reference.models import Reference
 from research_assistant.extensions import db
-from citation_styles import generate_citation  # 引用样式模块（稍后实现）
+from research_assistant.citation_styles import generate_citation
 
 bp = Blueprint("reference", __name__, url_prefix="/api/references")
 
