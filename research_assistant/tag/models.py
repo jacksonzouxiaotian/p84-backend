@@ -1,33 +1,18 @@
 from research_assistant.database import Column, PkModel, db, reference_col, relationship
+from research_assistant.reference.models import Reference
 
-
-class Tag(PkModel):
+class Tag(db.Model):
     __tablename__ = "tags"
-
-    name = Column(db.String(64), unique=True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True, nullable=False)
 
     def __repr__(self):
         return f"<Tag({self.name})>"
 
-class Document(PkModel):
-    """
-    示例文献模型，可与 BibTeX 导入结合使用。
-    可以根据项目需要扩展字段
-    """
-    __tablename__ = "documents"
-
-    title = Column(db.String(256), nullable=False)
-    user_id = reference_col("users")  # 和现有 User 模型对接
-    created_at = Column(db.DateTime, default=db.func.now())
-    completed = Column(db.Boolean, default=False)
-    tags = relationship("Tag", secondary="document_tags", backref="documents")
-
-    def __repr__(self):
-        return f"<Document({self.title})>"
-
+# 多对多中间表，指向 reference 表而非本地 document 表
 class DocumentTag(db.Model):
     __tablename__ = "document_tags"
 
     id = db.Column(db.Integer, primary_key=True)
-    document_id = reference_col("documents")
+    document_id = reference_col("reference")  # 指向 reference.id
     tag_id = reference_col("tags")
