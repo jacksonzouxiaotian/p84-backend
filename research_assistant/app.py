@@ -18,6 +18,7 @@ from research_assistant.planning.views import planning_bp
 from research_assistant.tag.views import blueprint as tag_bp
 from research_assistant.writing_tool.routes import writing_tool_bp
 from research_assistant.reference.models import Reference
+from research_assistant.reference.views import bp as reference_bp
 from research_assistant.extensions import (
     bcrypt,
     cache,
@@ -111,6 +112,7 @@ def register_blueprints(app):
     app.register_blueprint(chat_bp)
     app.register_blueprint(outline_bp)
     app.register_blueprint(planning_bp)
+    app.register_blueprint(reference_bp)
     return None
 
 
