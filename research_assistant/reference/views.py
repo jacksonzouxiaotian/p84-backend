@@ -42,7 +42,8 @@ def list_references():
 @jwt_required()
 def update_reference(ref_id):
     ref = Reference.query.get_or_404(ref_id)
-    if ref.user_id != get_jwt_identity():
+  
+    if ref.user_id != int(get_jwt_identity()):
         return jsonify({"error": "Unauthorized"}), 403
 
     data = request.get_json()
@@ -57,7 +58,7 @@ def update_reference(ref_id):
 @jwt_required()
 def delete_reference(ref_id):
     ref = Reference.query.get_or_404(ref_id)
-    if ref.user_id != get_jwt_identity():
+    if ref.user_id != int(get_jwt_identity()):
         return jsonify({"error": "Unauthorized"}), 403
 
     db.session.delete(ref)
@@ -69,7 +70,7 @@ def delete_reference(ref_id):
 def generate_citation_api(ref_id):
     style = request.args.get("style", "APA")  # APA / MLA / Chicago
     ref = Reference.query.get_or_404(ref_id)
-    if ref.user_id != get_jwt_identity():
+    if ref.user_id != int(get_jwt_identity()):
         return jsonify({"error": "Unauthorized"}), 403
 
     citation = generate_citation(ref, style)
