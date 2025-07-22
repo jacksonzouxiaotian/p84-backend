@@ -43,7 +43,7 @@ def create_app(config_object="research_assistant.settings"):
     if os.getenv("DATABASE_URL"):
         app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 
-    CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
+    CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
     # 扩展初始化
     register_extensions(app)
