@@ -14,8 +14,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 复制应用代码和入口脚本
 COPY . .
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
 # 暴露容器内的 5000 端口
 EXPOSE 5000
