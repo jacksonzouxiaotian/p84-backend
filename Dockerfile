@@ -19,6 +19,3 @@ RUN chmod +x /entrypoint.sh
 
 # 暴露容器内的 5000 端口
 EXPOSE 5000
-
-# 设置容器启动后执行的入口脚本
-ENTRYPOINT ["/entrypoint.sh"]
