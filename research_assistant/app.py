@@ -19,7 +19,7 @@ from research_assistant.tag.views import blueprint as tag_bp
 from research_assistant.writing_tool.routes import writing_tool_bp
 from research_assistant.reference.models import Reference
 from research_assistant.reference.views import bp as reference_bp
-from research_assistant.settings.views import settings_bp
+from research_assistant.user_settings.views import settings_bp
 from research_assistant.extensions import (
     bcrypt,
     cache,

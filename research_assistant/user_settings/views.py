@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from research_assistant.extensions import db
-from research_assistant.settings.models import UserSettings
+from research_assistant.user_settings.models import UserSettings
 
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
 
