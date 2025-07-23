@@ -32,6 +32,8 @@ def update_settings():
         settings.theme = data["theme"]
     if "notifications_enabled" in data:
         settings.notifications_enabled = data["notifications_enabled"]
+    if "export_format" in data: 
+        settings.export_format = data["export_format"]
 
     db.session.add(settings)
     db.session.commit()

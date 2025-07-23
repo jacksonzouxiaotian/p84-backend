@@ -7,10 +7,12 @@ class UserSettings(db.Model):
     language = db.Column(db.String(20), default="en")
     theme = db.Column(db.String(20), default="light")
     notifications_enabled = db.Column(db.Boolean, default=True)
+    export_format = db.Column(db.String(10), default="pdf")
 
     def to_dict(self):
         return {
             "language": self.language,
             "theme": self.theme,
             "notifications_enabled": self.notifications_enabled,
+            "export_format": self.export_format,
         }
