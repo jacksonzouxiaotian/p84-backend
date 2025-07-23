@@ -5,6 +5,13 @@ class Tag(db.Model):
     __tablename__ = "tags"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True, nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
+
+    documents = relationship(
+        "Reference",
+        secondary="document_tags", 
+        backref="tags"            
+    )
 
     def __repr__(self):
         return f"<Tag({self.name})>"
