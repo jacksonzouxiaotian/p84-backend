@@ -7,7 +7,7 @@ import sys
 from flask import Flask, jsonify
 from flask_cors import CORS
 from sqlalchemy import inspect
-
+from flask_migrate import upgrade as migrate_upgrade
 from research_assistant import commands, public, user
 from research_assistant.ai_assistant.views import blueprint as ai_bp
 from research_assistant.brain.views import brainstorm_bp
@@ -58,10 +58,13 @@ def create_app(config_object="research_assistant.settings"):
     # 初始化邮件和 S3 客户端
     mail.init_app(app)
     init_s3_client(app)
-
+    app.config["DEBUG"] = True
+    app.config["PROPAGATE_EXCEPTIONS"] = True
     # 启动时尝试检查或创建表，不影响启动
     with app.app_context():
         try:
+            if app.config["DEBUG"]:
+                db.drop_all()
             db.create_all()
         except Exception as e:
             app.logger.warning(
@@ -77,8 +80,6 @@ def create_app(config_object="research_assistant.settings"):
     configure_logger(app)
 
     # 强制打开调试及异常向上抛出
-    app.config["DEBUG"] = True
-    app.config["PROPAGATE_EXCEPTIONS"] = True
 
     return app
 
