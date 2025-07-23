@@ -16,7 +16,9 @@ class Reference(db.Model):
     completed = db.Column(db.Boolean, default=False)
 
     # 建立标签多对多关联（Tag <-> Reference）
-    tags = db.relationship("Tag", secondary="document_tags", backref="documents")
+
+    tags = db.relationship("Tag", secondary="document_tags", back_populates="documents")
+
 
     def to_dict(self):
         return {
