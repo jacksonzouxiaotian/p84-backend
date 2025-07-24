@@ -66,10 +66,27 @@ def update_profile():
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    if "username" in data:
-        user.username = data["username"]
-    if "email" in data:
-        user.email = data["email"]
+    username = data.get("username", "").strip()
+    email = data.get("email", "").strip()
+
+    if not username or not email:
+        return jsonify({"error": "Username and email are required"}), 400
+
+    # 检测邮箱格式（简单校验）
+    if "@" not in email or "." not in email:
+        return jsonify({"error": "Invalid email format"}), 400
+
+    # 检查是否与其他用户重复（排除自己）
+    existing_user = User.query.filter(User.id != user_id, User.username == username).first()
+    existing_email = User.query.filter(User.id != user_id, User.email == email).first()
+
+    if existing_user:
+        return jsonify({"error": "Username already taken"}), 409
+    if existing_email:
+        return jsonify({"error": "Email already in use"}), 409
+
+    user.username = username
+    user.email = email
 
     db.session.commit()
     return jsonify({
