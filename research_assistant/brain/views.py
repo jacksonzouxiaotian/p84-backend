@@ -104,5 +104,5 @@ def complete_brainstorm_step():
 @brainstorm_bp.route('/overall-feedback', methods=['POST'])
 @jwt_required()
 def overall_feedback():
-    mock_feedback = "✨ 这是您的整体反馈：请确保 WHY、WHAT 等都详尽清晰。"
+    mock_feedback = "✨ This is your overall feedback: Please make sure the WHY, WHAT, etc. are detailed and clear。"
     return jsonify({'feedback': mock_feedback}), 200
