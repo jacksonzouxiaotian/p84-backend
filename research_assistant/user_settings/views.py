@@ -94,3 +94,25 @@ def update_profile():
         "username": user.username,
         "email": user.email
     }), 200
+
+
+
+@settings_bp.route("/delete", methods=["DELETE"])
+@jwt_required()
+def delete_account():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    settings = UserSettings.query.filter_by(user_id=user_id).first()
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # 删除设置
+    if settings:
+        db.session.delete(settings)
+
+    # 删除用户
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({"message": "Account deleted successfully"}), 200
