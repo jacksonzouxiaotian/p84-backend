@@ -1,12 +1,14 @@
 import os
-
-import openai
 from flask import Blueprint, jsonify, request
+import google.generativeai as genai
 
 blueprint = Blueprint("ai", __name__, url_prefix="/ai")
 
-# 设置 OpenAI API Key（建议通过环境变量或配置文件）
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# 设置 Google AI Key（来自 .env）
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
+# 使用 Gemini 模型
+model = genai.GenerativeModel("gemini-pro")
 
 @blueprint.route("/ask", methods=["POST"])
 def ask_ai():
@@ -17,14 +19,8 @@ def ask_ai():
         return jsonify({"error": "Missing question"}), 400
 
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # 或 gpt-4
-            messages=[
-                {"role": "system", "content": "You are a helpful research assistant."},
-                {"role": "user", "content": question}
-            ]
-        )
-        answer = response.choices[0].message["content"]
+        response = model.generate_content(question)
+        answer = response.text.strip()
         return jsonify({"answer": answer})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
