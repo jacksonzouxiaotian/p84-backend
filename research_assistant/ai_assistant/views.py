@@ -1,17 +1,31 @@
 import os
 from flask import Blueprint, jsonify, request
-import google.generativeai as genai
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
+
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
 
 blueprint = Blueprint("ai", __name__, url_prefix="/ai")
 
-# 设置 Google AI Key（来自 .env）
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+# 配置 API Key
+API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# 使用 Gemini 模型
-model = genai.GenerativeModel("gemini-pro")
+if genai and API_KEY:
+    genai.configure(api_key=API_KEY)
+    model = genai.GenerativeModel("gemini-pro")
+else:
+    model = None
 
 @blueprint.route("/ask", methods=["POST"])
 def ask_ai():
+    if model is None:
+        return jsonify({"error": "Gemini model is not available or not configured."}), 500
+
     data = request.get_json()
     question = data.get("question", "").strip()
 
