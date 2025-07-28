@@ -5,7 +5,7 @@ from research_assistant.user_settings.models import UserSettings
 from research_assistant.user.models import User
 from research_assistant.reference.models import Reference
 from research_assistant.tag.models import Tag
-from research_assistant.planning.models import PhaseStatus
+from research_assistant.planning.models import Phase, Task
 
 
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
@@ -125,6 +125,9 @@ def delete_account():
                 db.session.query(Reference.id).filter_by(user_id=user_id)
             )
         ).delete(synchronize_session=False)
+
+        Task.query.filter_by(user_id=user_id).delete()
+        Phase.query.filter_by(user_id=user_id).delete()
 
         # 删除引用数据
         Reference.query.filter_by(user_id=user_id).delete()
