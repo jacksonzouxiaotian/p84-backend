@@ -3,6 +3,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from research_assistant.extensions import db
 from research_assistant.user_settings.models import UserSettings
 from research_assistant.user.models import User
+from research_assistant.reference.models import Reference
+from research_assistant.tag.models import Tag
+
 
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
 
@@ -101,15 +104,27 @@ def update_profile():
 @jwt_required()
 def delete_account():
     user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    settings = UserSettings.query.filter_by(user_id=user_id).first()
 
+    user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    # 删除设置
-    if settings:
-        db.session.delete(settings)
+    # 清除引用关系
+    from research_assistant.reference.models import Reference
+    from research_assistant.tag.models import Tag, DocumentTag
+    from research_assistant.user_settings.models import UserSettings
+
+    # 删除 DocumentTag 中间表记录（先删中间表，再删主表）
+    db.session.query(DocumentTag).filter(
+        DocumentTag.document_id.in_(
+            db.session.query(Reference.id).filter_by(user_id=user_id)
+        )
+    ).delete(synchronize_session=False)
+
+    # 删除引用数据
+    Reference.query.filter_by(user_id=user_id).delete()
+    Tag.query.filter_by(user_id=user_id).delete()
+    UserSettings.query.filter_by(user_id=user_id).delete()
 
     # 删除用户
     db.session.delete(user)
