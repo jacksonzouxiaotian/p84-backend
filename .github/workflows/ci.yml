@@ -10,6 +10,21 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -37,8 +52,8 @@ jobs:
           bandit -r . -ll
 
       - name: Run Tests (pytest)
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
         run: |
           echo "Running tests..."
           pytest --maxfail=3 --disable-warnings -q
-
-          
