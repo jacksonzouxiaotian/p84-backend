@@ -12,8 +12,6 @@ from webtest import TestApp
 from research_assistant.app import create_app
 from research_assistant.database import db as _db
 
-from .factories import UserFactory
-
 
 @pytest.fixture
 def app():
@@ -49,19 +47,6 @@ def db(app):
 
 
 @pytest.fixture
-def user(db):
-    """Create user for the tests."""
-    user = UserFactory(password="myprecious")
-    db.session.commit()
-    return user
-from research_assistant.extensions import db as _db
-from research_assistant.user.models import User
-
-test_email = "test@example.com"
-test_username = "testuser"
-test_password = "myprecious"
-
-@pytest.fixture
 def app():
     app = create_app()
     app.config.update({
@@ -86,17 +71,6 @@ def client(app):
     """提供 Flask test client。"""
     return app.test_client()
 
-@pytest.fixture
-def user(db):
-    user = User(
-        email=test_email,
-        username=test_username,
-        password=test_password
-    )
-    user.active = True
-    db.session.add(user)
-    db.session.commit()
-    return user
 
 @pytest.fixture
 def testapp(app):
