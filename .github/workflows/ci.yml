@@ -40,3 +40,5 @@ jobs:
         run: |
           echo "Running tests..."
           pytest --maxfail=3 --disable-warnings -q
+
+          
