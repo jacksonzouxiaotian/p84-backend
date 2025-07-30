@@ -59,13 +59,10 @@ def create_app(config_object="research_assistant.settings"):
     # 初始化邮件和 S3 客户端
     mail.init_app(app)
     init_s3_client(app)
-    app.config["DEBUG"] = True
     app.config["PROPAGATE_EXCEPTIONS"] = True
     # 启动时尝试检查或创建表，不影响启动
     with app.app_context():
         try:
-            if app.config["DEBUG"]:
-                db.drop_all()
             db.create_all()
         except Exception as e:
             app.logger.warning(
