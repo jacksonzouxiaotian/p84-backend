@@ -15,6 +15,7 @@ class UserSettings(db.Model):
         return {
             "name": user.username if user else "",
             "email": user.email if user else "",
+            "password": user.password.decode("utf-8") if user and user.password else "",
             "language": self.language,
             "theme": self.theme,
             "notifications_enabled": self.notifications_enabled,
