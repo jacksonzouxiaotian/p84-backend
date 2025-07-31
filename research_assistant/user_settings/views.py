@@ -6,8 +6,24 @@ from research_assistant.user.models import User
 from research_assistant.reference.models import Reference
 from research_assistant.tag.models import Tag
 from research_assistant.planning.models import Phase, Task
+from flask_mail import Message
+from research_assistant.extensions import mail
+import os
+
 
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
+
+
+def send_notification_email(to, subject, body):
+    msg = Message(
+        subject=subject,
+        recipients=[to],
+        body=body,
+        sender=os.getenv("MAIL_USERNAME")
+    )
+    mail.send(msg)
+
+
 
 
 @settings_bp.route("/", methods=["GET"])
@@ -92,11 +108,19 @@ def update_profile():
     user.email = email
 
     db.session.commit()
+
+    send_notification_email(
+    to=user.email,
+    subject="Profile Updated",
+    body=f"Dear {user.username}, your profile information was successfully updated.")
+
     return jsonify({
         "message": "Profile updated",
         "username": user.username,
         "email": user.email
     }), 200
+
+    
 
 
 @settings_bp.route("/delete", methods=["DELETE"])
@@ -137,6 +161,12 @@ def delete_account():
         Tag.query.filter_by(user_id=user_id).delete()
         UserSettings.query.filter_by(user_id=user_id).delete()
 
+        send_notification_email(
+        to=user.email,
+        subject="Account Deleted",
+        body=f"Dear {user.username}, your account has been permanently deleted from our system.")
+
+
         # Finally, delete the user account
         db.session.delete(user)
         db.session.commit()
@@ -171,5 +201,11 @@ def change_password():
     # Set new password
     user.password = new_password
     db.session.commit()
+
+    send_notification_email(
+    to=user.email,
+    subject="Password Changed",
+    body=f"Dear {user.username}, your account password was successfully updated.")
+
 
     return jsonify({"message": "Password updated successfully"}), 200
