@@ -85,6 +85,14 @@ def save_brainstorm_session():
         phase = Phase.query.filter_by(title='Define Topic & Question').first()
         if phase and not any(t.description=='Brainstorm Complete' for t in phase.tasks):
             phase.tasks.append(Task(description='Brainstorm Complete', completed=True))
+        if phase and not any(t.description == 'Brainstorm Complete' for t in phase.tasks):
+            new_task = Task(
+                user_id = user_id,
+                description = 'Brainstorm Complete',
+                completed = True
+            )
+            phase.tasks.append(new_task)
+            db.session.add(new_task)
     db.session.commit()
     return jsonify({'id': entry.id}), 201
 
