@@ -7,7 +7,6 @@ from research_assistant.reference.models import Reference
 from research_assistant.tag.models import Tag
 from research_assistant.planning.models import Phase, Task
 
-
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
 
 
@@ -76,11 +75,11 @@ def update_profile():
     if not username or not email:
         return jsonify({"error": "Username and email are required"}), 400
 
-    # 检测邮箱格式（简单校验）
+    # Simple email format validation
     if "@" not in email or "." not in email:
         return jsonify({"error": "Invalid email format"}), 400
 
-    # 检查是否与其他用户重复（排除自己）
+    # Check for duplicate username/email among other users
     existing_user = User.query.filter(User.id != user_id, User.username == username).first()
     existing_email = User.query.filter(User.id != user_id, User.email == email).first()
 
@@ -100,41 +99,45 @@ def update_profile():
     }), 200
 
 
-
 @settings_bp.route("/delete", methods=["DELETE"])
 @jwt_required()
 def delete_account():
     user_id = get_jwt_identity()
-
     user = User.query.get(user_id)
+
     if not user:
         return jsonify({"error": "User not found"}), 404
 
     from research_assistant.reference.models import Reference
     from research_assistant.tag.models import Tag, DocumentTag
     from research_assistant.user_settings.models import UserSettings
+    from research_assistant.brain.models import BrainEntry  # Import BrainEntry to delete
     from sqlalchemy import text
 
     try:
-        # 删除 phase_statuses 表中数据
+        # Delete rows in the phase_statuses table
         db.session.execute(text("DELETE FROM phase_statuses WHERE user_id = :uid"), {"uid": user_id})
 
-        # 删除 DocumentTag 中间表记录
+        # Delete document-tag relations linked to the user's documents
         db.session.query(DocumentTag).filter(
             DocumentTag.document_id.in_(
                 db.session.query(Reference.id).filter_by(user_id=user_id)
             )
         ).delete(synchronize_session=False)
 
+        # Delete planning-related data
         Task.query.filter_by(user_id=user_id).delete()
         Phase.query.filter_by(user_id=user_id).delete()
 
-        # 删除引用数据
+        # Delete brainstorm entries (important for NOT NULL constraint on user_id)
+        BrainEntry.query.filter_by(user_id=user_id).delete()
+
+        # Delete references, tags, and user settings
         Reference.query.filter_by(user_id=user_id).delete()
         Tag.query.filter_by(user_id=user_id).delete()
         UserSettings.query.filter_by(user_id=user_id).delete()
 
-        # 删除用户本身
+        # Finally, delete the user account
         db.session.delete(user)
         db.session.commit()
 
@@ -161,10 +164,11 @@ def change_password():
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    # Check old password
     if not user.check_password(current_password):
         return jsonify({"error": "Current password is incorrect"}), 401
 
-    # 加密新密码
+    # Set new password
     user.password = new_password
     db.session.commit()
 
