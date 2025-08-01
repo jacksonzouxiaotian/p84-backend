@@ -2,7 +2,7 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from research_assistant.planning.models import Phase
-
+from datetime import datetime, timedelta
 dashboard = Blueprint("dashboard", __name__, url_prefix="/dashboard")
 
 @dashboard.route("/phases", methods=["GET"])
@@ -22,7 +22,8 @@ def fetch_planning():
         'Plan Methodology',
         'Write & Revise'
     ]
-
+    warning_threshold = timedelta(days=7)
+    now = datetime.now()
     data = []
     for index, title in enumerate(desired_order):
         phase = user_phase_map.get(title)
@@ -34,6 +35,12 @@ def fetch_planning():
                 status = "Completed"
             else:
                 status = "NotCompleted"
+                if phase.deadline:
+                    deadline_dt = datetime.combine(phase.deadline, datetime.min.time())
+                    if deadline_dt < now:
+                        status = "Not Completed (Overdue)"
+                    elif (deadline_dt - now) <= warning_threshold:
+                        status = "Not Completed (Deadline Approaching)"
 
             data.append({
                 "id": index + 1,  # 顺序编号
