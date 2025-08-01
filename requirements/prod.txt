@@ -58,3 +58,4 @@ factory_boy>=3.3.0
 
 python-docx==1.1.2
 bibtexparser>=1.4
+

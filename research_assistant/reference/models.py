@@ -2,7 +2,7 @@ from research_assistant.extensions import db
 from datetime import datetime
 
 class Reference(db.Model):
-    __tablename__ = "reference"  # 显式指定表名
+    __tablename__ = "reference"
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, nullable=False)
@@ -12,13 +12,19 @@ class Reference(db.Model):
     source = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # 用于 Tag 页的完成标记
+    # 新增期刊相关字段
+    journal = db.Column(db.String(255))
+    volume = db.Column(db.String(50))
+    issue = db.Column(db.String(50))
+    pages = db.Column(db.String(50))
+    doi = db.Column(db.String(255))
+    url = db.Column(db.String(255))
+    month = db.Column(db.String(20))
+    note = db.Column(db.Text)
+
     completed = db.Column(db.Boolean, default=False)
 
-    # 建立标签多对多关联（Tag <-> Reference）
-
     tags = db.relationship("Tag", secondary="document_tags", back_populates="documents")
-
 
     def to_dict(self):
         return {
@@ -27,14 +33,14 @@ class Reference(db.Model):
             "authors": self.authors,
             "year": self.year,
             "source": self.source,
+            "journal": self.journal,
+            "volume": self.volume,
+            "issue": self.issue,
+            "pages": self.pages,
+            "doi": self.doi,
+            "url": self.url,
+            "month": self.month,
+            "note": self.note,
             "completed": self.completed,
-            "tags": [{"id": t.id, "name": t.name} for t in self.tags]
+            "tags": [{"id": t.id, "name": t.name} for t in self.tags],
         }
-    
-    def add_tag(self, tag):
-        if tag not in self.tags:
-            self.tags.append(tag)
-
-    def remove_tag(self, tag):
-        if tag in self.tags:
-            self.tags.remove(tag)
