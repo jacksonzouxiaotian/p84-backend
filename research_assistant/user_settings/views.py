@@ -10,7 +10,6 @@ from research_assistant.tag.models import Tag
 from research_assistant.planning.models import Phase, Task
 from flask_mail import Message
 
-
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
 
 
@@ -164,10 +163,18 @@ def delete_account():
 
     from research_assistant.tag.models import DocumentTag
     from research_assistant.brain.models import BrainEntry
+    from research_assistant.sections.models import Section  # Import Section model
     from sqlalchemy import text
 
     try:
-        # Delete related data first
+        # ---------------------------------------------------------
+        # 1. Remove data from sections first to avoid NOT NULL errors
+        # ---------------------------------------------------------
+        Section.query.filter_by(user_id=user_id).delete()
+
+        # ---------------------------------------------------------
+        # 2. Delete other related data
+        # ---------------------------------------------------------
         db.session.execute(text("DELETE FROM phase_statuses WHERE user_id = :uid"), {"uid": user_id})
 
         db.session.query(DocumentTag).filter(
@@ -183,11 +190,15 @@ def delete_account():
         Tag.query.filter_by(user_id=user_id).delete()
         UserSettings.query.filter_by(user_id=user_id).delete()
 
-        # Finally, delete the user
+        # ---------------------------------------------------------
+        # 3. Finally, delete the user record
+        # ---------------------------------------------------------
         db.session.delete(user)
         db.session.commit()
 
-        # Send email notification AFTER deletion
+        # ---------------------------------------------------------
+        # 4. Send email notification AFTER deletion
+        # ---------------------------------------------------------
         if send_deletion_email:
             send_email(
                 "Account Deleted",
