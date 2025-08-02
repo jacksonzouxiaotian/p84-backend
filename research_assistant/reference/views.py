@@ -106,13 +106,16 @@ def update_reference(ref_id):
 @bp.route("/<int:ref_id>", methods=["DELETE"])
 @jwt_required()
 def delete_reference(ref_id):
-    ref = Reference.query.get_or_404(ref_id)
-    if ref.user_id != int(get_jwt_identity()):
-        return jsonify({"error": "Unauthorized"}), 403
-
+    user_id = int(get_jwt_identity())
+    ref = Reference.query.filter_by(id=ref_id, user_id=user_id).first_or_404()
     db.session.delete(ref)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
     return jsonify({"msg": "Deleted successfully"})
+
 
 
 # -------------------- Upload .bib  --------------------
@@ -168,16 +171,18 @@ def upload_bib():
 def generate_citation_api(ref_id):
     """
     Generate a .docx file for the citation and trigger download.
-    With current model (no journal/volume/issue/pages/doi), this will include:
-      Authors (Year). Title.
+    Supported styles: APA | CHICAGO | MLA
     """
-    style = request.args.get("style", "APA").upper()
+    style = (request.args.get("style", "APA") or "APA").upper()
+    if style not in {"APA", "CHICAGO", "MLA"}:
+        return jsonify({"error": f"Unsupported style: {style}"}), 400
+
     ref = Reference.query.get_or_404(ref_id)
     if ref.user_id != int(get_jwt_identity()):
         return jsonify({"error": "Unauthorized"}), 403
 
     try:
-        file_bytes, download_name = build_docx_apa_journal(ref)
+        file_bytes, download_name = build_docx_citation(ref, style)
     except Exception as e:
         return jsonify({"error": f"Failed to build citation: {e}"}), 400
 
@@ -190,13 +195,17 @@ def generate_citation_api(ref_id):
     )
 
 
+
 # -------------------- Docx builder & utils --------------------
 
-def build_docx_apa_journal(ref):
+
+def build_docx_citation(ref, style: str):
     """
-    Build a single APA-style citation into a .docx.
-    With current model, we only have: authors, year, title. Journal/volume/issue are absent.
-    Output: "Authors (Year). Title."  (Journal parts omitted gracefully)
+    Build a single citation into a .docx for the given style.
+    With current model, we only have: authors, year, title.
+    APA  : Authors (Year). Title.
+    Chicago: Authors. "Title." Year.
+    MLA  : Authors. "Title." Year.
     """
     doc = Document()
     normal = doc.styles["Normal"]
@@ -205,29 +214,50 @@ def build_docx_apa_journal(ref):
     p = doc.add_paragraph()
     p.paragraph_format.space_after = Pt(0)
 
-    authors_text = format_authors_apa(getattr(ref, "authors", ""))
-    if authors_text:
-        add_run(p, authors_text + " ")
+    authors_raw = getattr(ref, "authors", "") or ""
+    year = getattr(ref, "year", "") or ""
+    title = (getattr(ref, "title", "") or "").strip()
 
-    year = getattr(ref, "year", None)
-    if year:
-        add_run(p, f"({year}). ")
+    if style == "APA":
+        authors_text = format_authors_apa(authors_raw)
+        # Authors (Year). Title.
+        if authors_text:
+            add_run(p, authors_text + " ")
+        if year:
+            add_run(p, f"({year}). ")
+        if title:
+            add_run(p, f"{title}. ")
 
-    title = getattr(ref, "title", "")
-    if title:
-        add_run(p, f"{title}. ")
+    elif style == "CHICAGO":
+        authors_text = format_authors_chicago(authors_raw)
+        # Authors. "Title." Year.
+        if authors_text:
+            add_run(p, authors_text + ". ")
+        if title:
+            add_run(p, f"\"{title}.\" ")
+        if year:
+            add_run(p, f"{year}. ")
 
-    # Journal/Volume/Issue/Pages are available
+    elif style == "MLA":
+        authors_text = format_authors_mla(authors_raw)
+        # Authors. "Title." Year.
+        if authors_text:
+            add_run(p, authors_text + ". ")
+        if title:
+            add_run(p, f"\"{title}.\" ")
+        if year:
+            add_run(p, f"{year}. ")
 
+    # 生成内存文件 & 下载名
     bio = BytesIO()
     doc.save(bio)
     bio.seek(0)
 
-    first_author = extract_first_author(authors_text)
+    first_author = extract_first_author(format_authors_apa(authors_raw))
     year_str = str(year or "")
-    name = f"{first_author}_{year_str}_APA.docx".strip("_").replace("__", "_")
+    name = f"{first_author}_{year_str}_{style}.docx".strip("_").replace("__", "_")
     safe = "".join(c if c.isalnum() or c in "._-" else "_" for c in name)
-    return bio, (safe or "citation_APA.docx")
+    return bio, (safe or f"citation_{style}.docx")
 
 
 def add_run(paragraph, text, italic=False):
@@ -255,6 +285,87 @@ def format_authors_apa(authors):
     if n == 2:
         return f"{items[0]} & {items[1]}"
     return f"{', '.join(items[:-1])}, & {items[-1]}"
+
+def _split_author_item(item: str):
+    """
+    Input like: 'Lastname, F.' or 'Lastname, First Middle'
+    Return (last, first_part) without surrounding spaces/dots normalization.
+    """
+    item = (item or "").strip()
+    if not item:
+        return "", ""
+    if "," in item:
+        last, first = [x.strip() for x in item.split(",", 1)]
+    else:
+        # fallback: space-split -> last token as last name
+        tokens = item.split()
+        if not tokens:
+            return "", ""
+        last = tokens[-1]
+        first = " ".join(tokens[:-1])
+    return last, first
+
+
+def _to_first_last(item: str) -> str:
+    """'Lastname, F.' -> 'F. Lastname'  (for Chicago/MLA subsequent authors)"""
+    last, first = _split_author_item(item)
+    return (f"{first} {last}").strip()
+
+
+def _to_last_first(item: str) -> str:
+    """Normalize to 'Lastname, First/Initials' (for leading author in MLA/Chicago)."""
+    last, first = _split_author_item(item)
+    if not last and not first:
+        return item.strip()
+    return f"{last}, {first}".strip().strip(",")
+
+
+def _authors_list(authors: str):
+    """Return list from 'A, B.; C, D.' -> ['A, B.', 'C, D.']"""
+    if not authors:
+        return []
+    return [a.strip() for a in authors.split(";") if a.strip()]
+
+
+def format_authors_chicago(authors: str) -> str:
+    """
+    Chicago bibliography: first author as 'Last, First', subsequent as 'First Last'.
+    Join with comma, final 'and'.
+    """
+    items = _authors_list(authors)
+    n = len(items)
+    if n == 0:
+        return ""
+    if n == 1:
+        return _to_last_first(items[0])
+
+    first = _to_last_first(items[0])
+    rest = [_to_first_last(x) for x in items[1:]]
+    if len(rest) == 1:
+        return f"{first} and {rest[0]}"
+    return f"{first}, {', '.join(rest[:-1])}, and {rest[-1]}"
+
+
+def format_authors_mla(authors: str) -> str:
+    """
+    MLA 9:
+      1 author: 'Last, First'
+      2 authors: 'Last, First, and First Last'
+      3+ authors: 'Last, First, et al.'
+    """
+    items = _authors_list(authors)
+    n = len(items)
+    if n == 0:
+        return ""
+    if n == 1:
+        return _to_last_first(items[0])
+    if n == 2:
+        first = _to_last_first(items[0])
+        second = _to_first_last(items[1])
+        return f"{first}, and {second}"
+    # 3+
+    first = _to_last_first(items[0])
+    return f"{first}, et al."
 
 
 def strip_doi_prefix(doi: str) -> str:
