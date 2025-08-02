@@ -1,5 +1,4 @@
-# research_assistant/user_settings/views.py
-
+import re
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from research_assistant.extensions import db, mail
@@ -10,13 +9,14 @@ from research_assistant.tag.models import Tag
 from research_assistant.planning.models import Phase, Task
 from flask_mail import Message
 
+# Create Blueprint for settings routes
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
 
 
 def send_email(subject, recipients, body):
     """
     Utility function to send email notifications.
-    Returns True if sent successfully, False otherwise.
+    Logs the error if sending fails.
     """
     try:
         msg = Message(subject=subject, recipients=recipients, body=body)
@@ -31,8 +31,8 @@ def send_email(subject, recipients, body):
 @jwt_required()
 def get_settings():
     """
-    Get the user's settings and profile information.
-    Create default settings if none exist.
+    Retrieve the current user's profile information and settings.
+    If the user has no settings yet, create default settings.
     """
     user_id = get_jwt_identity()
     settings = UserSettings.query.filter_by(user_id=user_id).first()
@@ -41,6 +41,7 @@ def get_settings():
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    # Create default settings if none exist
     if not settings:
         settings = UserSettings(user_id=user_id)
         db.session.add(settings)
@@ -57,12 +58,16 @@ def get_settings():
 @jwt_required()
 def update_settings():
     """
-    Update general user settings (language, theme, notifications, export format).
+    Update general user settings:
+    - Language
+    - Theme (light/dark)
+    - Notification preferences
+    - Export format
     """
     user_id = get_jwt_identity()
     data = request.get_json()
-    settings = UserSettings.query.filter_by(user_id=user_id).first()
 
+    settings = UserSettings.query.filter_by(user_id=user_id).first()
     if not settings:
         settings = UserSettings(user_id=user_id)
 
@@ -88,8 +93,11 @@ def update_settings():
 @jwt_required()
 def update_profile():
     """
-    Update the user's profile (username & email).
-    If notifications are enabled, send an email alert.
+    Update the user's profile information:
+    - Username
+    - Email
+
+    If notifications are enabled, send an email about the profile change.
     """
     user_id = get_jwt_identity()
     data = request.get_json()
@@ -105,28 +113,25 @@ def update_profile():
     username = data.get("username", "").strip()
     email = data.get("email", "").strip()
 
+    # Basic validation
     if not username or not email:
         return jsonify({"error": "Username and email are required"}), 400
 
-    # Simple email format validation
     if "@" not in email or "." not in email:
         return jsonify({"error": "Invalid email format"}), 400
 
     # Check for duplicates
-    existing_user = User.query.filter(User.id != user_id, User.username == username).first()
-    existing_email = User.query.filter(User.id != user_id, User.email == email).first()
-
-    if existing_user:
+    if User.query.filter(User.id != user_id, User.username == username).first():
         return jsonify({"error": "Username already taken"}), 409
-    if existing_email:
+    if User.query.filter(User.id != user_id, User.email == email).first():
         return jsonify({"error": "Email already in use"}), 409
 
-    # Update username and email
+    # Save changes
     user.username = username
     user.email = email
     db.session.commit()
 
-    # Send email notification if enabled
+    # Send notification email if enabled
     if settings and settings.notifications_enabled:
         send_email(
             "Profile Updated",
@@ -147,8 +152,14 @@ def update_profile():
 @jwt_required()
 def delete_account():
     """
-    Delete the user's account and all related data.
-    If notifications are enabled, send a final account deletion email.
+    Delete the user's account and all related data:
+    - References
+    - Tags
+    - Brain entries
+    - Planning tasks and phases
+    - Settings
+
+    If notifications are enabled, send an account deletion email.
     """
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
@@ -157,32 +168,25 @@ def delete_account():
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    # Save necessary email info BEFORE deletion
     user_email = user.email
     send_deletion_email = settings.notifications_enabled if settings else False
 
     from research_assistant.tag.models import DocumentTag
     from research_assistant.brain.models import BrainEntry
-    from research_assistant.sections.models import Section  # Import Section model
     from sqlalchemy import text
 
     try:
-        # ---------------------------------------------------------
-        # 1. Remove data from sections first to avoid NOT NULL errors
-        # ---------------------------------------------------------
-        Section.query.filter_by(user_id=user_id).delete()
-
-        # ---------------------------------------------------------
-        # 2. Delete other related data
-        # ---------------------------------------------------------
+        # Delete phase statuses (raw SQL for performance)
         db.session.execute(text("DELETE FROM phase_statuses WHERE user_id = :uid"), {"uid": user_id})
 
+        # Delete document tags for user's references
         db.session.query(DocumentTag).filter(
             DocumentTag.document_id.in_(
                 db.session.query(Reference.id).filter_by(user_id=user_id)
             )
         ).delete(synchronize_session=False)
 
+        # Delete all related data
         Task.query.filter_by(user_id=user_id).delete()
         Phase.query.filter_by(user_id=user_id).delete()
         BrainEntry.query.filter_by(user_id=user_id).delete()
@@ -190,15 +194,11 @@ def delete_account():
         Tag.query.filter_by(user_id=user_id).delete()
         UserSettings.query.filter_by(user_id=user_id).delete()
 
-        # ---------------------------------------------------------
-        # 3. Finally, delete the user record
-        # ---------------------------------------------------------
+        # Delete user record
         db.session.delete(user)
         db.session.commit()
 
-        # ---------------------------------------------------------
-        # 4. Send email notification AFTER deletion
-        # ---------------------------------------------------------
+        # Send final account deletion email if enabled
         if send_deletion_email:
             send_email(
                 "Account Deleted",
@@ -219,7 +219,10 @@ def delete_account():
 def change_password():
     """
     Change the user's password.
-    If notifications are enabled, send an email alert.
+    Validates:
+    - Current password correctness
+    - New password complexity (≥ 6 chars, contains uppercase and lowercase)
+    If notifications are enabled, send an email about the change.
     """
     user_id = get_jwt_identity()
     data = request.get_json()
@@ -230,12 +233,19 @@ def change_password():
     if not current_password or not new_password:
         return jsonify({"error": "Missing required fields"}), 400
 
+    # Password complexity validation
+    if len(new_password) < 6 or not re.search(r'[A-Z]', new_password) or not re.search(r'[a-z]', new_password):
+        return jsonify({
+            "error": "Password must be at least 6 characters long and contain both uppercase and lowercase letters."
+        }), 400
+
     user = User.query.get(user_id)
     settings = UserSettings.query.filter_by(user_id=user_id).first()
 
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    # Verify current password
     if not user.check_password(current_password):
         return jsonify({"error": "Current password is incorrect"}), 401
 
@@ -243,7 +253,7 @@ def change_password():
     user.password = new_password
     db.session.commit()
 
-    # Send email notification if enabled
+    # Send notification email if enabled
     if settings and settings.notifications_enabled:
         send_email(
             "Password Changed",
