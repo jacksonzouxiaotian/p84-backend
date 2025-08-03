@@ -89,10 +89,8 @@ def list_references():
 @bp.route("/<int:ref_id>", methods=["PUT"])
 @jwt_required()
 def update_reference(ref_id):
-    ref = Reference.query.get_or_404(ref_id)
-
-    if ref.user_id != int(get_jwt_identity()):
-        return jsonify({"error": "Unauthorized"}), 403
+    user_id = int(get_jwt_identity())
+    ref = Reference.query.filter_by(id=ref_id, user_id=user_id).first_or_404()
 
     data = request.get_json() or {}
     for field in ["title", "authors", "year", "source", "completed"]:
@@ -119,6 +117,11 @@ def delete_reference(ref_id):
 
 
 # -------------------- Upload .bib  --------------------
+def _clean_braced(s: str) -> str:
+    s = (s or "").strip()
+    while s.startswith("{") and s.endswith("}"):
+        s = s[1:-1].strip()
+    return s
 
 @bp.route("/upload_bib", methods=["POST"])
 @jwt_required()
@@ -143,9 +146,10 @@ def upload_bib():
         if (e.get("ENTRYTYPE") or "").lower() != "article":
             continue
 
-        title = (e.get("title") or "").strip("{} ")
+        title = _clean_braced(e.get("title"))
         authors = _normalize_authors_from_bib(e)
         year = (e.get("year") or "").strip()
+        journal = _clean_braced(e.get("journal"))
         if not (title and authors and year):
             continue
 
@@ -154,7 +158,7 @@ def upload_bib():
             title=title,
             authors=authors,
             year=str(year),
-            source="journal",
+            source=journal,
         )
         db.session.add(ref)
         db.session.flush()
@@ -177,10 +181,9 @@ def generate_citation_api(ref_id):
     if style not in {"APA", "CHICAGO", "MLA"}:
         return jsonify({"error": f"Unsupported style: {style}"}), 400
 
-    ref = Reference.query.get_or_404(ref_id)
-    if ref.user_id != int(get_jwt_identity()):
-        return jsonify({"error": "Unauthorized"}), 403
-
+    user_id = int(get_jwt_identity())
+    ref = Reference.query.filter_by(id=ref_id, user_id=user_id).first_or_404()
+    
     try:
         file_bytes, download_name = build_docx_citation(ref, style)
     except Exception as e:
@@ -217,6 +220,7 @@ def build_docx_citation(ref, style: str):
     authors_raw = getattr(ref, "authors", "") or ""
     year = getattr(ref, "year", "") or ""
     title = (getattr(ref, "title", "") or "").strip()
+    journal = (getattr(ref, "source", "") or "").strip()
 
     if style == "APA":
         authors_text = format_authors_apa(authors_raw)
@@ -227,6 +231,8 @@ def build_docx_citation(ref, style: str):
             add_run(p, f"({year}). ")
         if title:
             add_run(p, f"{title}. ")
+        if journal:
+            add_run(p, f"{journal}. ", italic=True)
 
     elif style == "CHICAGO":
         authors_text = format_authors_chicago(authors_raw)
@@ -235,6 +241,8 @@ def build_docx_citation(ref, style: str):
             add_run(p, authors_text + ". ")
         if title:
             add_run(p, f"\"{title}.\" ")
+        if journal:
+            add_run(p, f"{journal}. ", italic=True) 
         if year:
             add_run(p, f"{year}. ")
 
@@ -245,6 +253,8 @@ def build_docx_citation(ref, style: str):
             add_run(p, authors_text + ". ")
         if title:
             add_run(p, f"\"{title}.\" ")
+        if journal:
+            add_run(p, f"{journal}, ", italic=True)
         if year:
             add_run(p, f"{year}. ")
 
