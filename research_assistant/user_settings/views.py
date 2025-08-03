@@ -115,7 +115,7 @@ def update_profile():
         db.session.add(settings)
         db.session.commit()
 
-    # ✅ Update notifications_enabled if provided in the request
+    # Update notifications_enabled if provided
     if "notifications_enabled" in data:
         settings.notifications_enabled = data["notifications_enabled"]
         db.session.add(settings)
@@ -145,7 +145,7 @@ def update_profile():
     user.email = email
     db.session.commit()
 
-    # Send notification email only if enabled (now using latest updated value)
+    # Send notification email only if enabled
     if settings and settings.notifications_enabled:
         send_email(
             "Profile Updated",
@@ -171,7 +171,9 @@ def delete_account():
     - Tags
     - Brain entries
     - Planning tasks and phases
+    - Sections (to avoid NOT NULL constraint errors)
     - Settings
+    - User record
 
     If notifications are enabled, send an account deletion email.
     """
@@ -187,9 +189,13 @@ def delete_account():
 
     from research_assistant.tag.models import DocumentTag
     from research_assistant.brain.models import BrainEntry
+    from research_assistant.sections.models import Section  #  Import Section model
     from sqlalchemy import text
 
     try:
+        #  Delete sections first to avoid user_id NOT NULL constraint violations
+        Section.query.filter_by(user_id=user_id).delete()
+
         # Delete phase statuses (raw SQL for performance)
         db.session.execute(text("DELETE FROM phase_statuses WHERE user_id = :uid"), {"uid": user_id})
 
