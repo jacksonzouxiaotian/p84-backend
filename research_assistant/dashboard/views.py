@@ -84,7 +84,7 @@ def fetch_planning():
             else:
                 # Check for deadline-related warnings
                 if phase.deadline:
-                    deadline_dt = datetime.combine(phase.deadline, datetime.min.time())
+                    deadline_dt = datetime.combine(phase.deadline, datetime.min.time()) + timedelta(days=1)
                     if deadline_dt < now:
                         status = "Not Completed (Overdue)"
                     elif (deadline_dt - now) <= warning_threshold:

@@ -51,27 +51,35 @@ services:
     networks:
       - shared-net
 
-  flask-manage:
-    profiles: ["manage"]
+  flask-test:
     build:
       context: .
       args:
         <<: *build_args
-    entrypoint: flask
-    image: research_assistant-manage
+    image: research_assistant-test
+    env_file:
+      - .env
     environment:
-      FLASK_ENV: ${FLASK_ENV}
-      FLASK_DEBUG: ${FLASK_DEBUG}
+      FLASK_ENV: testing
+      FLASK_DEBUG: 1
       FLASK_APP: ${FLASK_APP}
-      PORT: ${PORT}
-      DATABASE_URL: ${DATABASE_URL}
-      SECRET_KEY: ${SECRET_KEY}
-    stdin_open: true
-    tty: true
+      DATABASE_URL: ${TEST_DATABASE_URL:-sqlite:///:memory:}
+      SQLALCHEMY_DATABASE_URI: ${TEST_DATABASE_URL:-sqlite:///:memory:}
+      SECRET_KEY: test
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
+      AWS_REGION: ${AWS_REGION}
+      AWS_ENDPOINT_URL: ${AWS_ENDPOINT_URL}
     depends_on:
       - db
+      - flask-prod
     networks:
       - shared-net
+    command: >
+      pytest --maxfail=1 --disable-warnings --tb=short --cov=research_assistant
+    profiles: ["test"]
+
 
   swagger-ui:
     image: swaggerapi/swagger-ui
