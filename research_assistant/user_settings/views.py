@@ -96,6 +96,8 @@ def update_profile():
     Update the user's profile information:
     - Username
     - Email
+    - Optionally update notification preference (notifications_enabled)
+      so that the latest preference is respected before deciding to send an email.
 
     If notifications are enabled, send an email about the profile change.
     """
@@ -106,6 +108,18 @@ def update_profile():
 
     if not user:
         return jsonify({"error": "User not found"}), 404
+
+    # Create default settings if none exist
+    if not settings:
+        settings = UserSettings(user_id=user_id)
+        db.session.add(settings)
+        db.session.commit()
+
+    # ✅ Update notifications_enabled if provided in the request
+    if "notifications_enabled" in data:
+        settings.notifications_enabled = data["notifications_enabled"]
+        db.session.add(settings)
+        db.session.commit()
 
     old_username = user.username
     old_email = user.email
@@ -131,7 +145,7 @@ def update_profile():
     user.email = email
     db.session.commit()
 
-    # Send notification email if enabled
+    # Send notification email only if enabled (now using latest updated value)
     if settings and settings.notifications_enabled:
         send_email(
             "Profile Updated",
