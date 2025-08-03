@@ -1,19 +1,50 @@
 # -*- coding: utf-8 -*-
-"""Helper utilities and decorators."""
-from flask import current_app, flash
+"""
+Helper utilities and decorators.
 
+This module provides:
+    - Flashing form validation errors to the user
+    - Utility for uploading files to AWS S3 storage
+"""
+
+from flask import current_app, flash
 from research_assistant.extensions import get_s3_client
 
 
 def flash_errors(form, category="warning"):
-    """Flash all errors for a form."""
+    """
+    Flash all validation errors from a WTForms form.
+
+    Args:
+        form (FlaskForm): The form containing validation errors.
+        category (str): Flash message category (default: "warning").
+
+    Behavior:
+        - Iterates over all fields with errors.
+        - Displays field label and error message via Flask's flash system.
+    """
     for field, errors in form.errors.items():
         for error in errors:
             flash(f"{getattr(form, field).label.text} - {error}", category)
 
 
 def upload_file_to_s3(file_storage, key_name, bucket_name=None):
-    """Upload a file object to S3 and return the key name."""
+    """
+    Upload a file to AWS S3 and return its key name.
+
+    Args:
+        file_storage (FileStorage): File object to upload.
+        key_name (str): The key (path/filename) to store in the S3 bucket.
+        bucket_name (str, optional): Name of the S3 bucket.
+            Defaults to AWS_S3_BUCKET_NAME in application config.
+
+    Returns:
+        str: The S3 object key (key_name).
+
+    Behavior:
+        - Uses a pre-configured S3 client from application extensions.
+        - Uploads the file to the specified bucket.
+    """
     s3_client = get_s3_client()
 
     if not bucket_name:

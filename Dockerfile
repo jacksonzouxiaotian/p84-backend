@@ -1,19 +1,34 @@
+# Use the official Python 3.10 slim image based on Debian Bullseye
 FROM python:3.10-slim-bullseye
 
-# 安装 netcat，用于检测数据库端口开放状态
+# --------------------------------------
+# Install system dependencies
+# --------------------------------------
+# - netcat (nc): Used to check database port availability
+# - Clean up cache to reduce image size
 RUN apt-get update \
     && apt-get install -y netcat \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Set the working directory inside the container
 WORKDIR /app
 
-# 复制并安装 Python 依赖
+# --------------------------------------
+# Install Python dependencies
+# --------------------------------------
+# - Copy production requirements file
+# - Install dependencies without caching to keep the image lightweight
 COPY requirements/prod.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制应用代码和入口脚本
+# --------------------------------------
+# Copy application source code
+# --------------------------------------
 COPY . .
 
-# 暴露容器内的 5000 端口
+# --------------------------------------
+# Expose application port
+# --------------------------------------
+# Flask will run on port 5000 inside the container
 EXPOSE 5000

@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
-"""The user module."""
-from . import views  # noqa
+"""Dashboard module for registering views."""
+from . import views  # noqa: F401  # Import views to register routes

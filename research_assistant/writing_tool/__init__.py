@@ -1,3 +1,4 @@
 # -*- coding: utf-8 -*-
-"""The wrting_tool module."""
-from . import routes
+"""Writing tool module for registering routes."""
+
+from . import routes  # noqa: F401  # Import routes to register endpoints

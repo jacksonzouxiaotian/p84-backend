@@ -1,4 +1,14 @@
 # writing_tool/routes.py
+"""
+Routes for Writing Tool module.
+This module provides API endpoints to manage cloud documents and their versions.
+Features include:
+    - Creating and listing documents
+    - Uploading new document versions
+    - Downloading specific versions with presigned URLs
+    - Deleting individual versions or entire documents
+All endpoints require JWT authentication and interact with AWS S3 for file storage.
+"""
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -9,11 +19,22 @@ from research_assistant.utils import upload_file_to_s3
 from research_assistant.writing_tool.models import CloudDocument as Document
 from research_assistant.writing_tool.models import DocumentVersion
 
+# Define a Blueprint for writing tool APIs
 writing_tool_bp = Blueprint("writing_tool", __name__, url_prefix="/writing_tool")
+
 
 @writing_tool_bp.route("/documents", methods=["POST"])
 @jwt_required()
 def create_document():
+    """
+    Create a new document with its first version.
+
+    Request:
+        - Form Data: title (string), file (file)
+    Returns:
+        - code: 0 if success
+        - document_id: newly created document's ID
+    """
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
 
@@ -23,19 +44,24 @@ def create_document():
     if not title or not file:
         return jsonify({"code": 1, "msg": "Missing title or file"}), 400
 
+    # Create document entry
     document = Document(title=title)
     db.session.add(document)
     db.session.flush()
 
+    # Generate S3 file key
     file_key = f"documents/{document.id}_v1.0_{file.filename}"
 
+    # Calculate file size (MB)
     file.seek(0, 2)
     size = file.tell()
     file.seek(0)
     file_size = round(size / (1024 * 1024), 2)
 
+    # Upload to S3
     file_url = upload_file_to_s3(file, file_key)
 
+    # Create first version entry
     version = DocumentVersion(
         document_id=document.id,
         major_version=1,
@@ -53,11 +79,16 @@ def create_document():
     return jsonify({"code": 0, "msg": "Document created", "document_id": document.id})
 
 
-
 @writing_tool_bp.route("/documents", methods=["GET"])
 @jwt_required()
 def list_documents_with_all_versions():
-    """Get all documents including all versions info."""
+    """
+    Retrieve all documents along with all their versions.
+
+    Returns:
+        - code: 0
+        - data: list of documents with version metadata
+    """
     documents = Document.query.all()
     result = []
     for doc in documents:
@@ -80,10 +111,18 @@ def list_documents_with_all_versions():
     return jsonify({"code": 0, "data": result})
 
 
-
 @writing_tool_bp.route("/documents/<string:document_id>/versions", methods=["POST"])
 @jwt_required()
 def upload_new_version(document_id):
+    """
+    Upload a new version of an existing document.
+
+    Auto-increments minor version, rolls over to major version if needed.
+    Marks the latest uploaded version as current.
+
+    Request:
+        - File upload
+    """
     user_id = get_jwt_identity()
     file = request.files.get("file")
 
@@ -92,6 +131,7 @@ def upload_new_version(document_id):
 
     document = Document.query.get_or_404(document_id)
 
+    # Find the latest version
     latest = DocumentVersion.query.filter_by(document_id=document_id)\
         .order_by(DocumentVersion.major_version.desc(), DocumentVersion.minor_version.desc())\
         .first()
@@ -109,13 +149,16 @@ def upload_new_version(document_id):
     new_version_str = f"v{major}.{minor}"
     file_key = f"documents/{document.id}_{new_version_str}_{file.filename}"
 
+    # Calculate file size
     file.seek(0, 2)
     size = file.tell()
     file.seek(0)
     file_size = round(size / (1024 * 1024), 2)
 
+    # Upload file
     file_url = upload_file_to_s3(file, file_key)
 
+    # Create new version record
     version = DocumentVersion(
         document_id=document.id,
         major_version=major,
@@ -133,11 +176,14 @@ def upload_new_version(document_id):
     return jsonify({"code": 0, "msg": "New version uploaded", "version": new_version_str})
 
 
-
 @writing_tool_bp.route("/documents/<string:document_id>/versions/<string:version_id>/download", methods=["GET"])
 @jwt_required()
 def download_version(document_id, version_id):
-    """Return presigned URL for downloading a specific version."""
+    """
+    Generate a presigned URL to download a specific document version.
+    
+    Only the uploader is authorized to download.
+    """
     user_id = int(get_jwt_identity())
 
     try:
@@ -170,7 +216,9 @@ def download_version(document_id, version_id):
 @writing_tool_bp.route("/documents/<string:document_id>/versions/<string:version_id>", methods=["DELETE"])
 @jwt_required()
 def delete_version(document_id, version_id):
-    """Delete a specific version and its file in S3."""
+    """
+    Delete a specific document version and its corresponding file from S3.
+    """
     try:
         major, minor = map(int, version_id.lstrip('v').split('.'))
     except Exception:
@@ -196,7 +244,9 @@ def delete_version(document_id, version_id):
 @writing_tool_bp.route("/documents/<string:document_id>", methods=["DELETE"])
 @jwt_required()
 def delete_document(document_id):
-    """Delete an entire document, all its versions, and all related files in S3."""
+    """
+    Delete an entire document, including all versions and files from S3.
+    """
     document = Document.query.get_or_404(document_id)
     s3_client = get_s3_client()
     for version in document.versions:
@@ -209,4 +259,4 @@ def delete_document(document_id):
     db.session.delete(document)
     db.session.commit()
 
-    return jsonify({"code": 0, "msg": "Document and all files deleted"}) 
+    return jsonify({"code": 0, "msg": "Document and all files deleted"})

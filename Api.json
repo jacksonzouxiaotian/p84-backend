@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Combined Full API",
+    "title": "Research Assistant API Documentation",
     "version": "1.0.0",
-    "description": "Merged API including all endpoints from Tags, Settings, AI Assistant, References, User Auth, Planning, Outline, Brainstorm, and Writing Tool."
+    "description": "This document provides the official OpenAPI 3.0 specification for the Research Assistant backend services.\n\nIt consolidates all available REST endpoints, including:\n- User Authentication and Management\n- Tags and Settings\n- AI Assistant\n- References Management\n- Research Planning and Outline Tools\n- Brainstorming Module\n- Document Writing and Version Control\n\nDevelopers and integrators can use this documentation to understand available endpoints, request/response structures, authentication requirements, and supported operations for seamless frontend and third-party integration."
   },
   "servers": [
     {
