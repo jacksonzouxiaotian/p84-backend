@@ -9,7 +9,7 @@ from research_assistant.tag.models import Tag
 from research_assistant.planning.models import Phase, Task
 from flask_mail import Message
 
-# Create Blueprint for settings routes
+# Create Blueprint for /settings routes
 settings_bp = Blueprint("settings", __name__, url_prefix="/settings")
 
 
@@ -97,7 +97,6 @@ def update_profile():
     - Username
     - Email
     - Optionally update notification preference (notifications_enabled)
-      so that the latest preference is respected before deciding to send an email.
 
     If notifications are enabled, send an email about the profile change.
     """
@@ -145,7 +144,7 @@ def update_profile():
     user.email = email
     db.session.commit()
 
-    # Send notification email only if enabled
+    # Send notification email if enabled
     if settings and settings.notifications_enabled:
         send_email(
             "Profile Updated",
@@ -167,11 +166,11 @@ def update_profile():
 def delete_account():
     """
     Delete the user's account and all related data:
+    - Sections (deleted directly via SQL, no Section model import required)
     - References
     - Tags
     - Brain entries
     - Planning tasks and phases
-    - Sections (to avoid NOT NULL constraint errors)
     - Settings
     - User record
 
@@ -187,26 +186,32 @@ def delete_account():
     user_email = user.email
     send_deletion_email = settings.notifications_enabled if settings else False
 
+    # Import inside function to avoid circular imports
     from research_assistant.tag.models import DocumentTag
     from research_assistant.brain.models import BrainEntry
-    from research_assistant.sections.models import Section  #  Import Section model
     from sqlalchemy import text
 
     try:
-        #  Delete sections first to avoid user_id NOT NULL constraint violations
-        Section.query.filter_by(user_id=user_id).delete()
+        # Delete sections directly using SQL
+        db.session.execute(
+            text("DELETE FROM sections WHERE user_id = :uid"),
+            {"uid": user_id}
+        )
 
-        # Delete phase statuses (raw SQL for performance)
-        db.session.execute(text("DELETE FROM phase_statuses WHERE user_id = :uid"), {"uid": user_id})
+        # Delete phase statuses directly using SQL
+        db.session.execute(
+            text("DELETE FROM phase_statuses WHERE user_id = :uid"),
+            {"uid": user_id}
+        )
 
-        # Delete document tags for user's references
+        # Delete document tags linked to user's references
         db.session.query(DocumentTag).filter(
             DocumentTag.document_id.in_(
                 db.session.query(Reference.id).filter_by(user_id=user_id)
             )
         ).delete(synchronize_session=False)
 
-        # Delete all related data
+        # Delete related objects
         Task.query.filter_by(user_id=user_id).delete()
         Phase.query.filter_by(user_id=user_id).delete()
         BrainEntry.query.filter_by(user_id=user_id).delete()
@@ -214,7 +219,7 @@ def delete_account():
         Tag.query.filter_by(user_id=user_id).delete()
         UserSettings.query.filter_by(user_id=user_id).delete()
 
-        # Delete user record
+        # Finally delete the user record
         db.session.delete(user)
         db.session.commit()
 
